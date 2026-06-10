@@ -1,8 +1,13 @@
 import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { Sidebar } from '../sidebar/sidebar';
+import { Topbar } from '../topbar/topbar';
 
-// TODO: shell principal (sidebar + topbar + router-outlet)
+// Shell principal: sidebar fijo a la izquierda, topbar arriba y
+// el contenido de cada vista en el router-outlet.
 @Component({
   selector: 'app-main-layout',
-  template: `<p>main-layout</p>`,
+  templateUrl: './main-layout.html',
+  imports: [RouterOutlet, Sidebar, Topbar],
 })
 export class MainLayout {}

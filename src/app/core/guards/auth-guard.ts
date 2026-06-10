@@ -1,4 +1,11 @@
-import { CanActivateFn } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth-service';
 
-// TODO: redirigir a /login si no hay sesión activa
-export const authGuard: CanActivateFn = () => true;
+// Permite el acceso solo con sesión activa; si no, redirige a /login.
+export const authGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  return auth.isAuthenticated() ? true : router.parseUrl('/login');
+};

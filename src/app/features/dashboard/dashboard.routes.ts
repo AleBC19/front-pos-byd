@@ -1,4 +1,8 @@
 import { Routes } from '@angular/router';
 
-// TODO: definir rutas del tablero
-export const DASHBOARD_ROUTES: Routes = [];
+export const DASHBOARD_ROUTES: Routes = [
+  {
+    path: '',
+    loadComponent: () => import('./dashboard').then((m) => m.Dashboard),
+  },
+];
