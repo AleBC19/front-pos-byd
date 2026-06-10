@@ -4,13 +4,13 @@ export type Permission = string;
 export interface User {
   id: string;
   name: string;
-  email: string;
+  username: string;
   role: string;
   permissions: Permission[];
 }
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
