@@ -1,0 +1,62 @@
+<div class="rounded-xl border border-gray-200 bg-white shadow-sm">
+  <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+    <h2 class="text-sm font-semibold text-gray-900">Movimientos recientes (Kardex)</h2>
+    <button type="button" class="text-xs font-medium text-blue-600 hover:underline">
+      Ver todos
+    </button>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-xs">
+      <thead>
+        <tr class="border-b border-gray-100 text-[11px] text-gray-500">
+          <th class="px-4 py-2 font-medium">Fecha</th>
+          <th class="px-3 py-2 font-medium">Producto</th>
+          <th class="px-3 py-2 font-medium">Movimiento</th>
+          <th class="px-3 py-2 text-center font-medium">Cantidad</th>
+          <th class="px-4 py-2 font-medium">Usuario</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        @for (movement of movements; track movement.date) {
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 whitespace-nowrap text-gray-600">{{ movement.date }}</td>
+            <td class="max-w-[150px] truncate px-3 py-2 whitespace-nowrap text-gray-900">
+              {{ movement.product }}
+            </td>
+            <td class="px-3 py-2">
+              <span
+                class="flex items-center gap-1 font-medium"
+                [class]="movement.type === 'Entrada' ? 'text-green-600' : 'text-red-600'"
+              >
+                <svg
+                  class="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  @if (movement.type === 'Entrada') {
+                    <path d="M12 4.5v15m0 0 6.75-6.75M12 19.5l-6.75-6.75" transform="rotate(180 12 12)" />
+                  } @else {
+                    <path d="M12 4.5v15m0 0 6.75-6.75M12 19.5l-6.75-6.75" />
+                  }
+                </svg>
+                {{ movement.type }}
+              </span>
+            </td>
+            <td
+              class="px-3 py-2 text-center font-semibold"
+              [class]="movement.type === 'Entrada' ? 'text-green-600' : 'text-red-600'"
+            >
+              {{ movement.quantity }}
+            </td>
+            <td class="px-4 py-2 text-gray-600">{{ movement.user }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

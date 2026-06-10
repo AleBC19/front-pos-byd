@@ -1,0 +1,11 @@
+<div class="flex h-screen overflow-hidden bg-gray-100 text-gray-900">
+  <app-sidebar />
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <app-topbar />
+
+    <main class="flex-1 overflow-y-auto px-4 pb-4">
+      <router-outlet />
+    </main>
+  </div>
+</div>

@@ -1,0 +1,30 @@
+<div class="grid grid-cols-12 gap-4">
+  <!-- Columna principal: KPIs + gráfica de ventas + donas -->
+  <div class="col-span-9 space-y-4">
+    <div class="grid grid-cols-4 gap-4">
+      @for (card of kpiCards; track card.label) {
+        <app-stat-card [data]="card" />
+      }
+    </div>
+
+    <div class="grid grid-cols-3 items-stretch gap-4">
+      <app-sales-by-day-chart class="col-span-2" />
+
+      <div class="space-y-4">
+        <app-sales-donut-card title="Ventas por método de pago" [items]="salesByPaymentMethod" />
+        <app-sales-donut-card title="Ventas por categoría" [items]="salesByCategory" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Columna derecha: alertas -->
+  <app-alerts-panel class="col-span-3" />
+
+  <!-- Fila inferior: productos + inventario/kardex -->
+  <app-products-table-card class="col-span-7" />
+
+  <div class="col-span-5 space-y-4">
+    <app-inventory-summary />
+    <app-kardex-card />
+  </div>
+</div>

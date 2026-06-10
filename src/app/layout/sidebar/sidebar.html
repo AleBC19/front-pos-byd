@@ -1,0 +1,124 @@
+<aside class="flex h-full w-[240px] shrink-0 flex-col border-r border-gray-200 bg-white">
+  <!-- Marca: placeholder del logo final + nombre -->
+  <div class="flex items-center gap-3 px-4 pt-5 pb-4">
+    <div
+      class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-center text-[10px] leading-tight font-medium text-gray-400"
+    >
+      LOGO<br />AQUÍ
+    </div>
+    <div class="min-w-0">
+      <p class="text-lg leading-6 font-bold text-blue-600">DDVC</p>
+      <p class="text-xs text-gray-500">Punto de Venta</p>
+    </div>
+  </div>
+
+  <!-- Navegación -->
+  <nav class="flex flex-col gap-1 px-3">
+    @for (item of navItems; track item.label) {
+      @if (item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="bg-blue-50 font-semibold text-blue-600"
+          class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50"
+        >
+          <svg
+            class="h-5 w-5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path [attr.d]="item.icon" />
+          </svg>
+          {{ item.label }}
+        </a>
+      } @else {
+        <button
+          type="button"
+          class="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50"
+        >
+          <svg
+            class="h-5 w-5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path [attr.d]="item.icon" />
+          </svg>
+          {{ item.label }}
+        </button>
+      }
+    }
+  </nav>
+
+  <!-- Tarjeta de cierre de caja -->
+  <div class="mt-5 px-3 pb-4">
+    <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="flex items-center gap-2">
+        <svg
+          class="h-5 w-5 text-gray-700"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M5.25 10.5h13.5l1.5 7.5a1.1 1.1 0 0 1-1.08 1.32H4.83a1.1 1.1 0 0 1-1.08-1.32l1.5-7.5Zm3-3.75h7.5m-7.5 0V4.88c0-.62.5-1.13 1.13-1.13h5.24c.62 0 1.13.5 1.13 1.13v1.87m-7.5 0v3.75m7.5-3.75v3.75M8.25 14.25h.01m3.74 0h.01m3.74 0h.01"
+          />
+        </svg>
+        <p class="text-sm font-semibold text-gray-900">Cierre de caja</p>
+      </div>
+
+      <div class="mt-3">
+        <p class="text-xs text-gray-500">Caja activa</p>
+        <p class="text-sm font-semibold text-blue-600">{{ cashRegister.name }}</p>
+        <p class="mt-0.5 text-[11px] text-gray-500">
+          Apertura: {{ cashRegister.openedAt }}<br />
+          por {{ cashRegister.openedBy }}
+        </p>
+      </div>
+
+      <hr class="my-3 border-gray-100" />
+
+      <div class="space-y-2.5">
+        <div>
+          <p class="text-xs text-gray-500">Efectivo esperado</p>
+          <p class="text-lg font-bold text-green-600">{{ cashRegister.expectedCash }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500">Efectivo contado</p>
+          <p class="text-lg font-bold text-gray-900">{{ cashRegister.countedCash }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500">Diferencia</p>
+          <p class="text-lg font-bold text-red-600">{{ cashRegister.difference }}</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-blue-600 px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50"
+      >
+        Ir a Cierre de caja
+        <svg
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</aside>
