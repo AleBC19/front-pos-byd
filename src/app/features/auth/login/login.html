@@ -171,8 +171,8 @@
                     }
                   </button>
                 </div>
-                @if (loginError()) {
-                  <p class="text-sm text-red-600">Contraseña incorrecta</p>
+                @if (loginError(); as error) {
+                  <p class="text-sm text-red-600">{{ error }}</p>
                 }
               </div>
 
@@ -187,9 +187,10 @@
 
               <button
                 type="submit"
-                class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                [disabled]="loading()"
+                class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Iniciar sesión
+                {{ loading() ? 'Ingresando…' : 'Iniciar sesión' }}
               </button>
 
               <button type="button" class="block w-full text-center text-sm text-blue-600 hover:underline">
@@ -198,41 +199,43 @@
             </form>
           } @else {
             <!-- Acceso rápido por PIN -->
-            @if (selectedProfile(); as profile) {
+            @if (pinTarget(); as target) {
               <div class="flex flex-col items-center gap-4">
                 <div class="flex flex-col items-center gap-2">
                   <div
                     class="flex h-14 w-14 items-center justify-center rounded-full text-lg font-semibold text-white"
-                    [style.backgroundColor]="avatarColor(profile.name)"
+                    [style.backgroundColor]="avatarColor(target.fullName)"
                   >
-                    {{ initials(profile.name) }}
+                    {{ initials(target.fullName) }}
                   </div>
                   <div class="text-center">
-                    <p class="text-sm font-semibold text-gray-900">{{ profile.name }}</p>
-                    <span
-                    class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                    [class]="profile.role === 'Administrador' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'"
-                  >
-                    {{ profile.role }}
-                  </span>
+                    <p class="text-sm font-semibold text-gray-900">{{ target.fullName }}</p>
+                    @if (target.role) {
+                      <span
+                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                        [class]="target.role === 'Administrador' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'"
+                      >
+                        {{ target.role }}
+                      </span>
+                    }
                   </div>
                 </div>
 
-                <p class="text-sm text-gray-500">Ingresa tu PIN</p>
+                <p class="text-sm text-gray-500">{{ pinLoading() ? 'Verificando…' : 'Ingresa tu PIN' }}</p>
 
                 <!-- Indicadores del PIN -->
                 <div class="flex gap-3">
                   @for (slot of pinSlots; track $index) {
                     <span
                       class="h-3.5 w-3.5 rounded-full border"
-                      [class]="$index < filledPin() ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-transparent'"
+                      [class]="
+                        pinError()
+                          ? ($index < filledPin() ? 'border-red-500 bg-red-500' : 'border-red-300 bg-transparent')
+                          : ($index < filledPin() ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-transparent')
+                      "
                     ></span>
                   }
                 </div>
-
-                @if (pinError()) {
-                  <p class="text-sm text-red-600">PIN incorrecto</p>
-                }
 
                 <!-- Teclado numérico -->
                 <div class="grid w-full max-w-[260px] grid-cols-3 gap-3">
@@ -240,29 +243,33 @@
                     <button
                       type="button"
                       (click)="pressDigit(digit)"
-                      class="rounded-lg border border-gray-200 py-3 text-lg font-medium text-gray-800 transition-colors hover:bg-gray-50"
+                      [disabled]="pinLoading()"
+                      class="rounded-lg border border-gray-200 py-3 text-lg font-medium text-gray-800 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {{ digit }}
                     </button>
                   }
                   <button
                     type="button"
-                    (click)="backToProfiles()"
-                    class="rounded-lg py-3 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50"
+                    (click)="backToUsers()"
+                    [disabled]="pinLoading()"
+                    class="rounded-lg py-3 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Volver
                   </button>
                   <button
                     type="button"
                     (click)="pressDigit('0')"
-                    class="rounded-lg border border-gray-200 py-3 text-lg font-medium text-gray-800 transition-colors hover:bg-gray-50"
+                    [disabled]="pinLoading()"
+                    class="rounded-lg border border-gray-200 py-3 text-lg font-medium text-gray-800 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     0
                   </button>
                   <button
                     type="button"
                     (click)="backspace()"
-                    class="flex items-center justify-center rounded-lg py-3 text-gray-500 transition-colors hover:bg-gray-50"
+                    [disabled]="pinLoading()"
+                    class="flex items-center justify-center rounded-lg py-3 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Borrar"
                   >
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
@@ -274,9 +281,60 @@
                     </svg>
                   </button>
                 </div>
+
+                @if (pinError(); as error) {
+                  <p class="text-sm text-red-600">{{ error }}</p>
+                }
+              </div>
+            } @else if (manualEntry()) {
+              <!-- Entrada manual de usuario para ingresar por PIN -->
+              <div class="space-y-4">
+                <div class="space-y-1.5">
+                  <label for="pin-usuario" class="block text-sm font-medium text-gray-700">Usuario</label>
+                  <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0v.75H4.5v-.75Z"
+                        />
+                      </svg>
+                    </span>
+                    <input
+                      id="pin-usuario"
+                      type="text"
+                      [formControl]="pinUsername"
+                      autocomplete="username"
+                      (keydown.enter)="confirmManualUsername()"
+                      class="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                  @if (pinUsername.touched && pinUsername.invalid) {
+                    <p class="text-sm text-red-600">Escribe tu usuario para continuar.</p>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  (click)="confirmManualUsername()"
+                  class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                >
+                  Continuar
+                </button>
+
+                @if (knownUsers().length > 0) {
+                  <button
+                    type="button"
+                    (click)="backToUsers()"
+                    class="block w-full text-center text-sm text-blue-600 hover:underline"
+                  >
+                    Volver
+                  </button>
+                }
               </div>
             } @else {
-              <div class="flex flex-col items-center gap-2 py-8 text-center">
+              <div class="flex flex-col items-center gap-3 py-8 text-center">
                 <svg class="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                   <path
                     stroke-linecap="round"
@@ -285,6 +343,9 @@
                   />
                 </svg>
                 <p class="text-sm text-gray-500">Selecciona un perfil de la derecha para ingresar tu PIN.</p>
+                <button type="button" (click)="startManualEntry()" class="text-sm text-blue-600 hover:underline">
+                  Ingresar con otro usuario
+                </button>
               </div>
             }
           }
@@ -305,51 +366,45 @@
               </svg>
               Perfiles rápidos
             </h2>
-            <p class="text-sm text-gray-500">Selecciona un perfil para ingresar más rápido</p>
+            <p class="text-sm text-gray-500">Usuarios de este equipo: selecciona uno para ingresar con tu PIN</p>
           </div>
-          <button type="button" class="flex items-center gap-1 text-sm text-blue-600 hover:underline">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M16.02 9.35h4.5v-4.5m-.34 4.16a8.25 8.25 0 1 0 .81 6.49"
-              />
-            </svg>
-            Actualizar
-          </button>
         </div>
 
         <div class="mt-4 grid flex-1 auto-rows-min content-start grid-cols-1 gap-3 sm:grid-cols-2">
-          @for (profile of profiles; track profile.id) {
-            <div class="flex flex-col rounded-xl border border-gray-200 p-4">
+          @for (user of knownUsers(); track user.username) {
+            <div class="relative flex flex-col rounded-xl border border-gray-200 p-4">
+              <button
+                type="button"
+                (click)="removeKnownUser(user)"
+                class="absolute right-2 top-2 rounded-full p-1 text-gray-300 transition-colors hover:bg-gray-100 hover:text-gray-500"
+                aria-label="Olvidar usuario"
+              >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+
               <div class="flex items-center gap-3">
-                <div class="relative">
-                  <div
-                    class="flex h-12 w-12 items-center justify-center rounded-full text-base font-semibold text-white"
-                    [style.backgroundColor]="avatarColor(profile.name)"
-                  >
-                    {{ initials(profile.name) }}
-                  </div>
-                  @if (profile.online) {
-                    <span
-                      class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500"
-                    ></span>
-                  }
+                <div
+                  class="flex h-12 w-12 items-center justify-center rounded-full text-base font-semibold text-white"
+                  [style.backgroundColor]="avatarColor(user.fullName)"
+                >
+                  {{ initials(user.fullName) }}
                 </div>
                 <div class="min-w-0">
-                  <p class="truncate text-sm font-semibold text-gray-900">{{ profile.name }}</p>
+                  <p class="truncate text-sm font-semibold text-gray-900">{{ user.fullName }}</p>
                   <span
                     class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                    [class]="profile.role === 'Administrador' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'"
+                    [class]="user.role === 'Administrador' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'"
                   >
-                    {{ profile.role }}
+                    {{ user.role }}
                   </span>
                 </div>
               </div>
 
               <button
                 type="button"
-                (click)="openPinFor(profile)"
+                (click)="openPinFor(user)"
                 class="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100"
               >
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
@@ -362,25 +417,32 @@
                 Ingresar PIN
               </button>
             </div>
+          } @empty {
+            <div
+              class="col-span-full flex flex-col items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-10 text-center"
+            >
+              <svg class="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 19.13v-1.5a4.13 4.13 0 0 0-4.12-4.13H5.63A4.13 4.13 0 0 0 1.5 17.63v1.5m12-9.38a4.13 4.13 0 0 0 0-7.88m4.5 16.13v-1.5a4.13 4.13 0 0 0-3-3.97M11.25 5.63a3.38 3.38 0 1 1-6.75 0 3.38 3.38 0 0 1 6.75 0Z"
+                />
+              </svg>
+              <p class="text-sm text-gray-500">Los usuarios que inicien sesión en este equipo aparecerán aquí.</p>
+            </div>
           }
         </div>
 
         <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4">
-          <button type="button" class="flex items-center gap-1.5 text-sm text-blue-600 hover:underline">
+          <button
+            type="button"
+            (click)="startManualEntry()"
+            class="flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
+          >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Agregar nuevo perfil
-          </button>
-          <button type="button" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M10.34 4.07c.15-.9.93-1.57 1.85-1.57.92 0 1.7.66 1.85 1.57l.09.55a1.7 1.7 0 0 0 2.45 1.21l.5-.26a1.88 1.88 0 0 1 2.42.69c.46.79.3 1.8-.38 2.4l-.42.37a1.7 1.7 0 0 0 0 2.56l.42.37c.68.6.84 1.61.38 2.4a1.88 1.88 0 0 1-2.42.69l-.5-.26a1.7 1.7 0 0 0-2.45 1.21l-.09.55c-.15.9-.93 1.57-1.85 1.57-.92 0-1.7-.66-1.85-1.57l-.09-.55a1.7 1.7 0 0 0-2.45-1.21l-.5.26a1.88 1.88 0 0 1-2.42-.69 1.88 1.88 0 0 1 .38-2.4l.42-.37a1.7 1.7 0 0 0 0-2.56l-.42-.37a1.88 1.88 0 0 1-.38-2.4 1.88 1.88 0 0 1 2.42-.69l.5.26a1.7 1.7 0 0 0 2.45-1.21l.09-.55ZM15 12.2a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0Z"
-              />
-            </svg>
-            Administrar perfiles
+            Ingresar con otro usuario
           </button>
         </div>
       </section>

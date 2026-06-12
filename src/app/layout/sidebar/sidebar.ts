@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../core/services/auth-service';
 import { CASH_REGISTER } from '../../features/dashboard/data/dashboard-mock';
 
 interface NavItem {
@@ -16,7 +17,19 @@ interface NavItem {
   imports: [RouterLink, RouterLinkActive],
 })
 export class Sidebar {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
   protected readonly cashRegister = CASH_REGISTER;
+
+  // Cierra sesión contra el API; navega a /login aunque la petición falle
+  // (la sesión local ya quedó limpia por el servicio).
+  protected logout(): void {
+    this.auth.logout().subscribe({
+      complete: () => this.router.navigate(['/login']),
+      error: () => this.router.navigate(['/login']),
+    });
+  }
 
   // Paths SVG estilo heroicons (outline, viewBox 24). Solo Dashboard navega por ahora.
   protected readonly navItems: NavItem[] = [
