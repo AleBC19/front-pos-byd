@@ -5,7 +5,7 @@
       <button
         type="button"
         (click)="activeTab.set('productos')"
-        class="border-b-2 px-4 pt-1 pb-2.5 text-sm font-medium transition-colors"
+        class="border-b-2 px-4 pt-1 pb-2.5 text-base font-medium transition-colors"
         [class]="
           activeTab() === 'productos'
             ? 'border-blue-600 text-blue-600'
@@ -17,7 +17,7 @@
       <button
         type="button"
         (click)="activeTab.set('categorias')"
-        class="border-b-2 px-4 pt-1 pb-2.5 text-sm font-medium transition-colors"
+        class="border-b-2 px-4 pt-1 pb-2.5 text-base font-medium transition-colors"
         [class]="
           activeTab() === 'categorias'
             ? 'border-blue-600 text-blue-600'
@@ -31,7 +31,7 @@
     <div class="flex items-center gap-2 pb-2">
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700"
+        class="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
       >
         <svg
           class="h-3.5 w-3.5"
@@ -74,7 +74,7 @@
       <input
         type="text"
         placeholder="Buscar producto..."
-        class="w-full rounded-lg border border-gray-200 py-1.5 pr-8 pl-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+        class="w-full rounded-lg border border-gray-200 py-1.5 pr-8 pl-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
       />
       <svg
         class="absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -90,7 +90,7 @@
     </div>
 
     <select
-      class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-600 focus:border-blue-500 focus:outline-none"
+      class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-gray-600 focus:border-blue-500 focus:outline-none"
     >
       <option>Todas las categorías</option>
       <option>Materiales</option>
@@ -99,7 +99,7 @@
     </select>
 
     <select
-      class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-600 focus:border-blue-500 focus:outline-none"
+      class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-gray-600 focus:border-blue-500 focus:outline-none"
     >
       <option>Todos los estados</option>
       <option>En stock</option>
@@ -107,16 +107,16 @@
       <option>Crítico</option>
     </select>
 
-    <button type="button" class="text-xs font-medium text-blue-600 hover:underline">
+    <button type="button" class="text-sm font-medium text-blue-600 hover:underline">
       Limpiar
     </button>
   </div>
 
   <!-- Tabla -->
   <div class="overflow-x-auto">
-    <table class="w-full text-left text-xs">
+    <table class="w-full text-left text-sm">
       <thead>
-        <tr class="border-y border-gray-100 text-[11px] text-gray-500">
+        <tr class="border-y border-gray-100 text-sm text-gray-500">
           <th class="px-4 py-2 font-medium">Imagen</th>
           <th class="px-3 py-2 font-medium">Código</th>
           <th class="px-3 py-2 font-medium">Nombre</th>
@@ -162,7 +162,7 @@
             </td>
             <td class="px-3 py-2">
               <span
-                class="inline-block rounded-full px-2 py-0.5 text-[11px] font-medium"
+                class="inline-block rounded-full px-2 py-0.5 text-sm font-medium"
                 [class]="statusClass(product.status)"
               >
                 {{ product.status }}
@@ -221,45 +221,45 @@
     <div class="flex items-center gap-1">
       <button
         type="button"
-        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-xs text-gray-500 hover:bg-gray-50"
+        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-sm text-gray-500 hover:bg-gray-50"
         aria-label="Página anterior"
       >
         ‹
       </button>
       <button
         type="button"
-        class="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 text-xs font-medium text-white"
+        class="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 text-sm font-medium text-white"
       >
         1
       </button>
       <button
         type="button"
-        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-xs text-gray-600 hover:bg-gray-50"
+        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
       >
         2
       </button>
       <button
         type="button"
-        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-xs text-gray-600 hover:bg-gray-50"
+        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
       >
         3
       </button>
-      <span class="px-1 text-xs text-gray-400">…</span>
+      <span class="px-1 text-sm text-gray-400">…</span>
       <button
         type="button"
-        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-xs text-gray-600 hover:bg-gray-50"
+        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
       >
         12
       </button>
       <button
         type="button"
-        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-xs text-gray-500 hover:bg-gray-50"
+        class="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-sm text-gray-500 hover:bg-gray-50"
         aria-label="Página siguiente"
       >
         ›
       </button>
     </div>
 
-    <p class="text-[11px] text-gray-500">Mostrando 1 - 6 de 70 productos</p>
+    <p class="text-sm text-gray-500">Mostrando 1 - 6 de 70 productos</p>
   </div>
 </div>

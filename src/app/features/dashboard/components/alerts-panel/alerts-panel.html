@@ -1,8 +1,8 @@
 <div class="flex h-full flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
   <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-    <h2 class="text-sm font-semibold text-gray-900">Alertas</h2>
+    <h2 class="text-base font-semibold text-gray-900">Alertas</h2>
     <span
-      class="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[11px] font-bold text-white"
+      class="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-sm font-bold text-white"
     >
       {{ totalAlerts }}
     </span>
@@ -29,12 +29,12 @@
         </span>
 
         <div class="min-w-0 flex-1">
-          <p class="truncate text-xs font-medium text-gray-900">{{ alert.name }}</p>
-          <p class="text-[11px] text-gray-500">Código: {{ alert.code }}</p>
+          <p class="truncate text-sm font-medium text-gray-900">{{ alert.name }}</p>
+          <p class="text-sm text-gray-500">Código: {{ alert.code }}</p>
         </div>
 
         <span
-          class="shrink-0 text-[10px] font-semibold"
+          class="shrink-0 text-xs font-semibold"
           [class]="alert.severity === 'critical' ? 'text-red-600' : 'text-orange-500'"
         >
           Stock: {{ alert.stock }}
@@ -42,7 +42,7 @@
 
         <button
           type="button"
-          class="shrink-0 rounded-md border border-blue-600 px-1.5 py-1 text-[10px] font-medium text-blue-600 transition-colors hover:bg-blue-50"
+          class="shrink-0 rounded-md border border-blue-600 px-1.5 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50"
         >
           Reabastecer
         </button>
@@ -51,7 +51,7 @@
   </ul>
 
   <div class="border-t border-gray-100 px-4 py-3">
-    <button type="button" class="flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline">
+    <button type="button" class="flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline">
       Ver todas las alertas
       <svg
         class="h-3.5 w-3.5"
