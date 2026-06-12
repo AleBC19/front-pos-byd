@@ -18,3 +18,6 @@ export interface CategoryListQuery {
   page?: number;
   pageSize?: number;
 }
+
+// Tamaños de página que acepta el backend (cualquier otro valor responde 400).
+export const CATEGORY_PAGE_SIZES = [20, 50, 60] as const;
