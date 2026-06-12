@@ -1,0 +1,96 @@
+<form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
+  <!-- Errores devueltos por el API (validación 400, nombre duplicado, etc.) -->
+  @if (apiError(); as error) {
+    <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-base text-red-700">
+      <p class="font-medium">{{ error.message }}</p>
+      @if (error.details.length) {
+        <ul class="mt-1 list-inside list-disc text-sm">
+          @for (detail of error.details; track detail) {
+            <li>{{ detail }}</li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  <div class="flex flex-col gap-1">
+    <label class="text-base font-medium text-gray-700">Nombre <span class="text-red-500">*</span></label>
+    <input
+      type="text"
+      formControlName="name"
+      placeholder="Ingrese el nombre de la categoría"
+      class="w-full rounded-lg border border-gray-200 px-3 py-2 text-base text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+      [class.border-red-400]="invalid('name')"
+    />
+    @if (invalid('name')) {
+      <p class="text-sm text-red-600">El nombre es obligatorio (2 a 100 caracteres).</p>
+    }
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label class="text-base font-medium text-gray-700">Descripción</label>
+    <textarea
+      rows="3"
+      formControlName="description"
+      placeholder="Ingrese una descripción de la categoría..."
+      class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-base text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+    ></textarea>
+    @if (invalid('description')) {
+      <p class="text-sm text-red-600">La descripción no puede exceder 500 caracteres.</p>
+    }
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <p class="text-base font-medium text-gray-400">Estado</p>
+    <div class="flex items-center gap-2">
+      <!-- El alta siempre es activa; activar/desactivar se hace desde la lista -->
+      <button
+        type="button"
+        role="switch"
+        disabled
+        [attr.aria-checked]="category()?.isActive ?? true"
+        aria-label="Estado de la categoría"
+        title="Se gestiona desde la lista de categorías"
+        class="relative inline-flex h-6 w-11 cursor-not-allowed items-center rounded-full"
+        [class]="(category()?.isActive ?? true) ? 'bg-green-300' : 'bg-gray-300'"
+      >
+        <span
+          class="inline-block h-4 w-4 rounded-full bg-white"
+          [class]="(category()?.isActive ?? true) ? 'translate-x-6' : 'translate-x-1'"
+        ></span>
+      </button>
+      <span class="text-base text-gray-500">{{ (category()?.isActive ?? true) ? 'Activo' : 'Inactivo' }}</span>
+    </div>
+    <p class="text-xs text-gray-400">Se gestiona desde la lista de categorías.</p>
+  </div>
+
+  <div class="flex items-center gap-2 border-t border-gray-100 pt-4">
+    <button
+      type="submit"
+      [disabled]="saving()"
+      class="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-600 px-4 py-2.5 text-base font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M5.25 3.75h10.94a1.5 1.5 0 0 1 1.06.44l2.56 2.56a1.5 1.5 0 0 1 .44 1.06v10.94a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V5.25a1.5 1.5 0 0 1 1.5-1.5Zm2.25 0v4.5a.75.75 0 0 0 .75.75h7.5a.75.75 0 0 0 .75-.75v-4.5M7.5 20.25v-5.5a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 .75.75v5.5"
+        />
+      </svg>
+      {{ saving() ? 'Guardando...' : 'Guardar categoría' }}
+    </button>
+    <button
+      type="button"
+      (click)="cancelled.emit()"
+      class="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+    >
+      Cancelar
+    </button>
+  </div>
+</form>

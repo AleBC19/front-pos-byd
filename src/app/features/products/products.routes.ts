@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-// TODO: agregar rutas de new, :id/edit y categories cuando existan las vistas.
+// TODO: agregar rutas de new y :id/edit cuando existan las vistas.
 export const PRODUCTS_ROUTES: Routes = [
   {
     path: '',

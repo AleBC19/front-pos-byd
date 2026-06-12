@@ -18,7 +18,26 @@ export class CategoriesService {
     });
   }
 
+  getCategory(id: number): Observable<CategoryDto> {
+    return this.http.get<CategoryDto>(`${this.baseUrl}/${id}`);
+  }
+
   createCategory(body: SaveCategoryRequest): Observable<CategoryDto> {
     return this.http.post<CategoryDto>(this.baseUrl, body);
+  }
+
+  updateCategory(id: number, body: SaveCategoryRequest): Observable<CategoryDto> {
+    return this.http.put<CategoryDto>(`${this.baseUrl}/${id}`, body);
+  }
+
+  // Borrado suave: el API marca la categoría como inactiva.
+  // Falla si la categoría tiene productos activos asociados.
+  deleteCategory(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  // Reactiva una categoría dada de baja.
+  activateCategory(id: number): Observable<CategoryDto> {
+    return this.http.patch<CategoryDto>(`${this.baseUrl}/${id}/activate`, {});
   }
 }
