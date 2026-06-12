@@ -31,7 +31,7 @@ export class Sidebar {
     });
   }
 
-  // Paths SVG estilo heroicons (outline, viewBox 24). Solo Dashboard navega por ahora.
+  // Paths SVG estilo heroicons (outline, viewBox 24). Solo Dashboard y Productos navegan por ahora.
   protected readonly navItems: NavItem[] = [
     {
       label: 'Dashboard',
@@ -45,7 +45,7 @@ export class Sidebar {
     },
     {
       label: 'Productos',
-      route: null,
+      route: '/products',
       icon: 'm21 7.5-9-4.5-9 4.5m18 0-9 4.5m9-4.5v9l-9 4.5m0-9L3 7.5m9 4.5v9m-9-13.5v9l9 4.5',
     },
     {
