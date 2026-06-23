@@ -43,3 +43,54 @@ export interface Session {
   expiresAtUtc: string;
   user: User;
 }
+
+// ---------------------------------------------------------------------------
+// Administración de usuarios (/api/users). El JSON viaja en camelCase.
+// ---------------------------------------------------------------------------
+
+export interface UserDto {
+  id: number;
+  username: string;
+  firstName: string;
+  secondName: string | null;
+  lastName: string;
+  rolId: number;
+  rolName: string;
+  isActive: boolean;
+}
+
+export interface CreateUserRequest {
+  username: string;
+  firstName: string;
+  secondName?: string;
+  lastName: string;
+  password: string;
+  pin: string;
+  rolId: number;
+}
+
+export interface UpdateUserRequest {
+  username: string;
+  firstName: string;
+  secondName?: string;
+  lastName: string;
+  // Opcionales en edición: solo se actualizan si se envían con valor.
+  password?: string;
+  pin?: string;
+  rolId: number;
+  isActive: boolean;
+}
+
+export interface UserRoleOption {
+  id: number;
+  name: string;
+}
+
+// El API no expone un endpoint de roles; estos son los roles sembrados
+// (DataSeeder). Reemplazar por carga dinámica si más adelante existe el endpoint.
+export const USER_ROLES: UserRoleOption[] = [
+  { id: 1, name: 'Administrador' },
+  { id: 2, name: 'Vendedor' },
+];
+
+export const USER_PAGE_SIZES = [10, 20, 50] as const;

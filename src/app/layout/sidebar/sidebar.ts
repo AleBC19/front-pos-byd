@@ -60,7 +60,7 @@ export class Sidebar {
     },
     {
       label: 'Usuarios',
-      route: null,
+      route: '/users',
       icon: 'M15 19.13v-1.5a4.13 4.13 0 0 0-4.12-4.13H5.63A4.13 4.13 0 0 0 1.5 17.63v1.5M18 8.25v6m3-3h-6m-4.5-3.38a3.38 3.38 0 1 1-6.75 0 3.38 3.38 0 0 1 6.75 0Z',
     },
     {
