@@ -1,4 +1,8 @@
 import { Routes } from '@angular/router';
 
-// TODO: definir rutas de usuarios (lista, roles-permisos, accesos recientes)
-export const USERS_ROUTES: Routes = [];
+export const USERS_ROUTES: Routes = [
+  {
+    path: '',
+    loadComponent: () => import('./users-page/users-page').then((m) => m.UsersPage),
+  },
+];

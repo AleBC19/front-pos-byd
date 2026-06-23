@@ -1,0 +1,61 @@
+<div class="rounded-xl border border-gray-200 bg-white shadow-sm">
+  <div class="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
+    <svg
+      class="h-5 w-5 text-blue-600"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M12 6v6l3.75 2.25M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+    <h2 class="text-lg font-semibold text-gray-900">Accesos recientes</h2>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-base">
+      <thead>
+        <tr class="border-b border-gray-100 text-base text-gray-500">
+          <th class="px-4 py-2.5 font-medium">Usuario</th>
+          <th class="px-3 py-2.5 font-medium">Fecha y hora</th>
+          <th class="px-3 py-2.5 font-medium">Dispositivo</th>
+          <th class="px-3 py-2.5 font-medium">IP</th>
+          <th class="px-4 py-2.5 font-medium">Resultado</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        @for (access of accesses; track access.id) {
+          <tr class="transition-colors hover:bg-gray-50">
+            <td class="px-4 py-2">
+              <div class="flex items-center gap-2.5">
+                <div
+                  class="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold"
+                  [class]="access.avatarColor"
+                >
+                  {{ access.initials }}
+                </div>
+                <div class="flex flex-col">
+                  <span class="font-medium text-gray-900">{{ access.fullName }}</span>
+                  <span class="text-sm text-gray-500">{{ access.username }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-3 py-2 text-gray-600">{{ access.dateTime }}</td>
+            <td class="px-3 py-2 text-gray-600">{{ access.device }}</td>
+            <td class="px-3 py-2 text-gray-600">{{ access.ip }}</td>
+            <td class="px-4 py-2">
+              <span
+                class="inline-block rounded-full px-2.5 py-0.5 text-sm font-medium"
+                [class]="access.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+              >
+                {{ access.success ? 'Exitoso' : 'Fallido' }}
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
