@@ -55,7 +55,7 @@ export class Sidebar {
     },
     {
       label: 'Inventario',
-      route: null,
+      route: '/inventory',
       icon: 'M3.75 8.25h16.5M4.5 8.25a1.5 1.5 0 0 1 0-3h15a1.5 1.5 0 0 1 0 3m-15 0V18a2.25 2.25 0 0 0 2.25 2.25h10.5A2.25 2.25 0 0 0 19.5 18V8.25m-9.75 4.5h4.5',
     },
     {
