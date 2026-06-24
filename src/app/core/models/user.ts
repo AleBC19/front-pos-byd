@@ -1,4 +1,5 @@
-// TODO: definir permisos cuando el API los exponga
+// Código de permiso del catálogo del API (p. ej. "administrar_usuarios").
+// El API los entrega en User.permissions al iniciar sesión.
 export type Permission = string;
 
 export interface User {
@@ -35,6 +36,8 @@ export interface LoginResponse {
   username: string;
   fullName: string;
   role: string;
+  // Códigos de permiso del usuario (catálogo Permissions del API).
+  permissions: string[];
 }
 
 // Sesión persistida en localStorage (pos.session)
@@ -80,17 +83,5 @@ export interface UpdateUserRequest {
   rolId: number;
   isActive: boolean;
 }
-
-export interface UserRoleOption {
-  id: number;
-  name: string;
-}
-
-// El API no expone un endpoint de roles; estos son los roles sembrados
-// (DataSeeder). Reemplazar por carga dinámica si más adelante existe el endpoint.
-export const USER_ROLES: UserRoleOption[] = [
-  { id: 1, name: 'Administrador' },
-  { id: 2, name: 'Vendedor' },
-];
 
 export const USER_PAGE_SIZES = [10, 20, 50] as const;

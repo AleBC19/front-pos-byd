@@ -98,7 +98,7 @@ export class AuthService {
         name: response.fullName,
         username: response.username,
         role: response.role,
-        permissions: [],
+        permissions: response.permissions ?? [],
       },
     };
   }

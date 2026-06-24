@@ -1,0 +1,111 @@
+<div class="rounded-xl border border-gray-200 bg-white shadow-sm">
+  <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+    <h2 class="text-base font-semibold text-gray-900">Historial de movimientos / Kardex</h2>
+  </div>
+
+  @if (error(); as message) {
+    <div class="border-b border-red-100 bg-red-50 px-4 py-2 text-base text-red-700">
+      {{ message }}
+    </div>
+  }
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-base">
+      <thead>
+        <tr class="border-b border-gray-100 text-base text-gray-500">
+          <th class="px-4 py-2.5 font-medium">Fecha / hora</th>
+          <th class="px-3 py-2.5 font-medium">Producto</th>
+          <th class="px-3 py-2.5 font-medium">Tipo</th>
+          <th class="px-3 py-2.5 text-center font-medium">Cantidad</th>
+          <th class="px-3 py-2.5 font-medium">Usuario</th>
+          <th class="px-4 py-2.5 font-medium">Motivo</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        @if (loading()) {
+          <tr>
+            <td colspan="6" class="px-4 py-10 text-center text-gray-400">Cargando movimientos...</td>
+          </tr>
+        } @else if (!movements().length) {
+          <tr>
+            <td colspan="6" class="px-4 py-10 text-center text-gray-400">
+              No hay movimientos registrados.
+            </td>
+          </tr>
+        } @else {
+          @for (movement of movements(); track movement.id) {
+            <tr class="transition-colors hover:bg-gray-50">
+              <td class="px-4 py-2 whitespace-nowrap text-gray-600">
+                {{ movement.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+              </td>
+              <td class="px-3 py-2">
+                <p class="font-medium text-gray-900">{{ movement.productName }}</p>
+                <p class="text-sm text-gray-500">{{ movement.productCode }}</p>
+              </td>
+              <td class="px-3 py-2">
+                <span
+                  class="inline-flex items-center gap-1 font-medium"
+                  [class]="movement.change >= 0 ? 'text-green-600' : 'text-red-600'"
+                >
+                  <svg
+                    class="h-3.5 w-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    @if (movement.change >= 0) {
+                      <path d="M12 4.5v15m0 0 6.75-6.75M12 19.5l-6.75-6.75" transform="rotate(180 12 12)" />
+                    } @else {
+                      <path d="M12 4.5v15m0 0 6.75-6.75M12 19.5l-6.75-6.75" />
+                    }
+                  </svg>
+                  {{ typeLabels[movement.type] }}
+                </span>
+              </td>
+              <td
+                class="px-3 py-2 text-center font-semibold"
+                [class]="movement.change >= 0 ? 'text-green-600' : 'text-red-600'"
+              >
+                {{ movement.change > 0 ? '+' : '' }}{{ movement.change }}
+              </td>
+              <td class="px-3 py-2 text-gray-600">{{ movement.userName ?? '—' }}</td>
+              <td class="px-4 py-2 text-gray-600">{{ movement.reason ?? '—' }}</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  <div class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-4 py-3">
+    <p class="text-base text-gray-500">
+      Mostrando {{ rangeStart() }} a {{ rangeEnd() }} de {{ totalCount() }} movimientos
+    </p>
+
+    <div class="flex items-center gap-1">
+      <button
+        type="button"
+        (click)="goToPage(page() - 1)"
+        [disabled]="page() <= 1"
+        class="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-base text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label="Página anterior"
+      >
+        ‹
+      </button>
+      <span class="px-2 text-base text-gray-600">{{ page() }} / {{ totalPages() || 1 }}</span>
+      <button
+        type="button"
+        (click)="goToPage(page() + 1)"
+        [disabled]="page() >= totalPages()"
+        class="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-base text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label="Página siguiente"
+      >
+        ›
+      </button>
+    </div>
+  </div>
+</div>

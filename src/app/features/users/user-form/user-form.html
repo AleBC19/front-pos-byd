@@ -214,7 +214,7 @@
       formControlName="rolId"
       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-base text-gray-700 focus:border-blue-500 focus:outline-none"
     >
-      @for (role of roles; track role.id) {
+      @for (role of roles(); track role.id) {
         <option [ngValue]="role.id">{{ role.name }}</option>
       }
     </select>

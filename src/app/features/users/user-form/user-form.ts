@@ -1,17 +1,15 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiError, extractApiError } from '../../../core/models/api';
-import {
-  CreateUserRequest,
-  UpdateUserRequest,
-  USER_ROLES,
-  UserDto,
-} from '../../../core/models/user';
+import { RoleDto } from '../../../core/models/role';
+import { CreateUserRequest, UpdateUserRequest, UserDto } from '../../../core/models/user';
+import { RolesService } from '../../../core/services/roles-service';
 import { UsersService } from '../../../core/services/users-service';
 
 // Formulario de alta/edición del panel lateral "Editar usuario", conectado a
 // /api/users (POST al crear, PUT al editar). En edición, contraseña y PIN son
-// opcionales: dejarlos vacíos conserva los actuales.
+// opcionales: dejarlos vacíos conserva los actuales. Los roles del selector se
+// cargan de /api/roles (RolesService).
 @Component({
   selector: 'app-user-form',
   templateUrl: './user-form.html',
@@ -20,6 +18,7 @@ import { UsersService } from '../../../core/services/users-service';
 export class UserForm {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly usersService = inject(UsersService);
+  private readonly rolesService = inject(RolesService);
 
   // Usuario a editar; null = alta. El panel reutiliza la instancia, por eso un
   // effect repuebla o limpia el formulario cuando cambia la entrada.
@@ -28,7 +27,8 @@ export class UserForm {
   readonly cancelled = output<void>();
   readonly saved = output<UserDto>();
 
-  protected readonly roles = USER_ROLES;
+  // Roles disponibles para el selector (cargados de /api/roles).
+  protected readonly roles = signal<RoleDto[]>([]);
   protected readonly showPassword = signal(false);
   protected readonly showPin = signal(false);
   protected readonly saving = signal(false);
@@ -51,11 +51,13 @@ export class UserForm {
     lastName: ['', [Validators.required, Validators.maxLength(100)]],
     password: '',
     pin: '',
-    rolId: [USER_ROLES[0].id, [Validators.required]],
+    rolId: [0, [Validators.required]],
     isActive: true,
   });
 
   constructor() {
+    this.rolesService.getRoles().subscribe((roles) => this.roles.set(roles));
+
     effect(() => {
       const user = this.user();
       this.apiError.set(null);
@@ -73,7 +75,8 @@ export class UserForm {
           isActive: user.isActive,
         });
       } else {
-        this.form.reset({ rolId: USER_ROLES[0].id, isActive: true });
+        // En alta, preseleccionar el primer rol disponible (cuando ya cargaron).
+        this.form.reset({ rolId: this.roles()[0]?.id ?? 0, isActive: true });
       }
     });
   }
