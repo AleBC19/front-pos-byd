@@ -1,6 +1,8 @@
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { extractApiError } from '../../../core/models/api';
-import { USER_PAGE_SIZES, USER_ROLES, UserDto } from '../../../core/models/user';
+import { RoleDto } from '../../../core/models/role';
+import { USER_PAGE_SIZES, UserDto } from '../../../core/models/user';
+import { RolesService } from '../../../core/services/roles-service';
 import { UsersService } from '../../../core/services/users-service';
 import { Modal } from '../../../shared/components/modal/modal';
 
@@ -18,6 +20,7 @@ const AVATAR_COLORS = [
 
 // Tab "Usuarios": lista conectada a /api/users. La búsqueda, el filtro de rol/estado
 // y la paginación se resuelven en cliente (el API devuelve un array plano de activos).
+// Los roles del filtro se cargan de /api/roles (RolesService).
 @Component({
   selector: 'app-user-list',
   templateUrl: './user-list.html',
@@ -25,8 +28,10 @@ const AVATAR_COLORS = [
 })
 export class UserList {
   private readonly usersService = inject(UsersService);
+  private readonly rolesService = inject(RolesService);
 
-  protected readonly roles = USER_ROLES;
+  // Roles para el filtro (cargados de /api/roles).
+  protected readonly roles = signal<RoleDto[]>([]);
   protected readonly pageSizes = USER_PAGE_SIZES;
 
   // Datos y estado de la petición.
@@ -92,6 +97,11 @@ export class UserList {
   );
 
   constructor() {
+    // El filtro de rol se llena de /api/roles; si falla, queda solo "Todos".
+    this.rolesService.getRoles().subscribe({
+      next: (roles) => this.roles.set(roles),
+      error: () => undefined,
+    });
     this.load();
   }
 
