@@ -1,0 +1,320 @@
+<app-modal [(open)]="open" (closed)="handleClose()" title="Cobrar" size="lg">
+  @if (stage() === 'pay') {
+    <div class="grid gap-6 lg:grid-cols-2">
+      <!-- Columna izquierda: total y método de pago -->
+      <div>
+        <p class="text-sm font-medium text-gray-500">TOTAL A PAGAR</p>
+        <p class="mb-4 text-4xl font-bold text-blue-600">
+          {{ grandTotal() | currency: 'MXN' : 'symbol-narrow' }}
+        </p>
+
+        @if (!split()) {
+          <p class="mb-2 text-sm font-medium text-gray-600">Selecciona método de pago</p>
+          <div class="mb-4 grid grid-cols-2 gap-2">
+            @for (m of methods; track m) {
+              <button
+                type="button"
+                (click)="selectMethod(m)"
+                [class]="
+                  method() === m
+                    ? 'rounded-lg border-2 border-blue-600 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700'
+                    : 'rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50'
+                "
+              >
+                {{ labels[m] }}
+              </button>
+            }
+          </div>
+
+          @if (method() === Cash) {
+            <label class="mb-1 block text-sm font-medium text-gray-600">Monto recibido</label>
+            <input
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              [value]="amountReceived() ?? ''"
+              (input)="onReceived($any($event.target).value)"
+              class="mb-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-lg focus:border-blue-500 focus:outline-none"
+            />
+            <div class="mb-3 flex flex-wrap gap-2">
+              @for (amount of quickAmounts; track amount) {
+                <button
+                  type="button"
+                  (click)="setQuick(amount)"
+                  class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                >
+                  {{ amount | currency: 'MXN' : 'symbol-narrow' }}
+                </button>
+              }
+            </div>
+            <div class="flex items-center justify-between rounded-lg bg-green-50 px-3 py-2">
+              <span class="text-sm font-medium text-gray-600">Cambio</span>
+              <span class="text-xl font-bold text-green-600">
+                {{ change() | currency: 'MXN' : 'symbol-narrow' }}
+              </span>
+            </div>
+          }
+        }
+
+        <button
+          type="button"
+          (click)="toggleSplit()"
+          class="mt-4 text-sm font-medium text-blue-600 transition-colors hover:underline"
+        >
+          {{ split() ? '← Volver a pago simple' : 'Pago dividido (opcional)' }}
+        </button>
+      </div>
+
+      <!-- Columna derecha: pago dividido o vista previa del ticket -->
+      <div class="rounded-lg border border-gray-100 bg-gray-50 p-3">
+        @if (split()) {
+          <p class="mb-2 text-sm font-semibold text-gray-700">Pago dividido</p>
+          <div class="space-y-2">
+            @for (row of splitRows(); track $index) {
+              <div class="flex items-center gap-2">
+                <select
+                  (change)="setSplitMethod($index, +$any($event.target).value)"
+                  class="rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                >
+                  @for (m of methods; track m) {
+                    <option [value]="m" [selected]="row.method === m">{{ labels[m] }}</option>
+                  }
+                </select>
+                <input
+                  type="number"
+                  inputmode="decimal"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  [value]="row.amount ?? ''"
+                  (input)="setSplitAmount($index, $any($event.target).value)"
+                  class="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  (click)="removeSplitRow($index)"
+                  aria-label="Eliminar método"
+                  class="rounded p-1 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            }
+          </div>
+          <button
+            type="button"
+            (click)="addSplitRow()"
+            class="mt-2 flex items-center gap-1 text-sm font-medium text-blue-600 transition-colors hover:underline"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Agregar método
+          </button>
+
+          <div class="mt-3 space-y-1 border-t border-gray-200 pt-2 text-sm">
+            <div class="flex justify-between text-gray-600">
+              <span>Total a pagar</span>
+              <span>{{ grandTotal() | currency: 'MXN' : 'symbol-narrow' }}</span>
+            </div>
+            <div class="flex justify-between text-gray-600">
+              <span>Pagado</span>
+              <span class="text-green-600">{{ paid() | currency: 'MXN' : 'symbol-narrow' }}</span>
+            </div>
+            <div class="flex justify-between font-semibold">
+              <span>Pendiente</span>
+              <span [class]="pendingCents() === 0 ? 'text-green-600' : 'text-red-600'">
+                {{ pending() | currency: 'MXN' : 'symbol-narrow' }}
+              </span>
+            </div>
+          </div>
+        } @else {
+          <p class="mb-2 text-sm font-semibold text-gray-700">Resumen</p>
+          <div class="max-h-48 space-y-1 overflow-y-auto text-sm">
+            @for (line of lines(); track line.productId) {
+              <div class="flex justify-between text-gray-600">
+                <span class="truncate pr-2">{{ line.quantity }}× {{ line.name }}</span>
+                <span>{{ line.quantity * line.unitPrice | currency: 'MXN' : 'symbol-narrow' }}</span>
+              </div>
+            }
+          </div>
+          <div class="mt-2 space-y-1 border-t border-gray-200 pt-2 text-sm">
+            <div class="flex justify-between text-gray-600">
+              <span>Subtotal</span>
+              <span>{{ subtotal() | currency: 'MXN' : 'symbol-narrow' }}</span>
+            </div>
+            <div class="flex justify-between text-gray-600">
+              <span>IVA (16%)</span>
+              <span>{{ taxes() | currency: 'MXN' : 'symbol-narrow' }}</span>
+            </div>
+            <div class="flex justify-between font-bold text-gray-900">
+              <span>TOTAL</span>
+              <span>{{ grandTotal() | currency: 'MXN' : 'symbol-narrow' }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (error(); as message) {
+      <p class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ message }}</p>
+    }
+
+    <div class="mt-5 flex justify-end gap-2">
+      <button
+        type="button"
+        (click)="cancel()"
+        class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-4 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+      >
+        <svg
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 18 18 6M6 6l12 12" />
+        </svg>
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="confirm()"
+        [disabled]="!canConfirm()"
+        class="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2 text-base font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m4.5 12.75 6 6 9-13.5" />
+        </svg>
+        {{ processing() ? 'Procesando...' : 'Confirmar pago' }}
+      </button>
+    </div>
+  } @else {
+    <!-- Venta registrada: confirmación + recibo -->
+    <div class="flex flex-col items-center text-center">
+      <span class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600">
+        <svg
+          class="h-8 w-8"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m4.5 12.75 6 6 9-13.5" />
+        </svg>
+      </span>
+      <h3 class="text-xl font-bold text-gray-900">Pago confirmado</h3>
+
+      @if (sale(); as s) {
+        <p class="mt-1 text-sm text-gray-500">Folio {{ s.folio }}</p>
+        <div class="mt-4 w-full max-w-sm space-y-1 rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
+          <div class="flex justify-between text-gray-600">
+            <span>Total</span>
+            <span class="font-semibold text-gray-900">
+              {{ s.total | currency: 'MXN' : 'symbol-narrow' }}
+            </span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>Recibido</span>
+            <span>{{ s.amountReceived | currency: 'MXN' : 'symbol-narrow' }}</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>Cambio</span>
+            <span class="font-semibold text-green-600">
+              {{ s.change | currency: 'MXN' : 'symbol-narrow' }}
+            </span>
+          </div>
+        </div>
+      }
+
+      <div class="mt-4 w-full max-w-sm">
+        <div class="flex gap-2">
+          <input
+            type="email"
+            placeholder="correo@ejemplo.com"
+            [value]="emailInput()"
+            (input)="emailInput.set($any($event.target).value)"
+            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          />
+          <button
+            type="button"
+            (click)="sendEmail()"
+            [disabled]="emailSending()"
+            class="shrink-0 rounded-lg border border-blue-600 px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-60"
+          >
+            {{ emailSending() ? 'Enviando...' : 'Enviar' }}
+          </button>
+        </div>
+        @if (emailSent()) {
+          <p class="mt-1 text-left text-xs text-green-600">Recibo enviado.</p>
+        }
+        @if (emailError(); as message) {
+          <p class="mt-1 text-left text-xs text-red-700">{{ message }}</p>
+        }
+      </div>
+
+      <div class="mt-5 flex w-full max-w-sm gap-2">
+        <button
+          type="button"
+          (click)="print()"
+          [disabled]="!receipt()"
+          class="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-4 py-2 text-base font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <svg
+            class="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M16.5 6.75V4.5a.75.75 0 0 0-.75-.75h-7.5a.75.75 0 0 0-.75.75v2.25m9 0h1.5a1.5 1.5 0 0 1 1.5 1.5v5.25a1.5 1.5 0 0 1-1.5 1.5h-1.5m-9 0h-1.5a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h1.5m9 0h-9m7.5 6.75h-6a.75.75 0 0 0-.75.75v3.75c0 .41.34.75.75.75h6a.75.75 0 0 0 .75-.75V14.25a.75.75 0 0 0-.75-.75Z"
+            />
+          </svg>
+          Imprimir recibo
+        </button>
+        <button
+          type="button"
+          (click)="newSale()"
+          class="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-base font-semibold text-white transition-colors hover:bg-blue-700"
+        >
+          Nueva venta
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>

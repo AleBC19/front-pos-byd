@@ -1,4 +1,10 @@
 import { Routes } from '@angular/router';
 
-// TODO: definir rutas de ventas (new, history, history/:id, returns)
-export const SALES_ROUTES: Routes = [];
+// Por ahora solo la pantalla de Nueva Venta (POS).
+// TODO: history, history/:id y returns cuando se implementen sus vistas.
+export const SALES_ROUTES: Routes = [
+  {
+    path: '',
+    loadComponent: () => import('./new-sale/new-sale').then((m) => m.NewSale),
+  },
+];
