@@ -130,6 +130,22 @@ export interface CreateSaleRequest {
   details: CreateSaleDetailRequest[];
 }
 
+// Cuerpo de POST /api/sales/hold. Deja la venta en espera (estado Pending): guarda el
+// carrito sin cobrar. No lleva pagos ni monto recibido; el inventario no se descuenta
+// hasta reanudar. Los descuentos por línea requieren el permiso aplicar_descuentos.
+export interface HoldSaleRequest {
+  customerId?: number | null;
+  details: CreateSaleDetailRequest[];
+}
+
+// Cuerpo de POST /api/sales/{id}/resume. Finaliza/cobra una venta que estaba en espera:
+// el carrito ya quedó fijado al dejarla en espera, aquí solo se aportan los pagos y el
+// efectivo recibido. La suma de payments debe coincidir exactamente con el total o 409.
+export interface ResumeSaleRequest {
+  amountReceived: number;
+  payments: SalePaymentRequest[];
+}
+
 // Cuerpo de POST /api/sales/{id}/email-receipt. Si se omite el email usa el del cliente.
 export interface EmailReceiptRequest {
   email?: string;
@@ -148,6 +164,13 @@ export interface GetSalesRequest {
   page?: number;
   pageSize?: number;
 }
+
+// Traducción del estado de la venta para los badges del historial.
+export const SALE_STATUS_LABELS: Record<SaleStatus, string> = {
+  [SaleStatus.Pending]: 'En espera',
+  [SaleStatus.Paid]: 'Completada',
+  [SaleStatus.Cancelled]: 'Cancelada',
+};
 
 // Traducción del método de pago para la UI.
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {

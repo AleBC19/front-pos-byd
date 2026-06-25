@@ -1,0 +1,52 @@
+<app-side-panel [(open)]="open" title="Ventas en espera" width="max-w-[440px]">
+  @if (error(); as message) {
+    <div class="mb-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-base text-red-700">
+      {{ message }}
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="py-10 text-center text-gray-400">Cargando ventas en espera...</p>
+  } @else if (!held().length) {
+    <div class="flex flex-col items-center justify-center gap-2 py-12 text-center text-gray-400">
+      <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
+      </svg>
+      <p class="text-sm">No hay ventas en espera.</p>
+    </div>
+  } @else {
+    <ul class="space-y-2">
+      @for (sale of held(); track sale.id) {
+        <li class="rounded-xl border border-gray-200 p-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <p class="font-semibold text-gray-900">{{ sale.folio }}</p>
+              <p class="truncate text-sm text-gray-500">{{ sale.customerName }}</p>
+              <p class="text-sm text-gray-400">{{ sale.date | date: 'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+            <p class="shrink-0 text-lg font-bold text-gray-900">
+              {{ sale.total | currency: 'MXN' : 'symbol-narrow' }}
+            </p>
+          </div>
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              (click)="cobrar(sale)"
+              class="rounded-lg bg-green-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+            >
+              Cobrar
+            </button>
+            <button
+              type="button"
+              (click)="discard(sale)"
+              [disabled]="discardingId() === sale.id"
+              class="rounded-lg border border-red-200 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {{ discardingId() === sale.id ? 'Descartando...' : 'Descartar' }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</app-side-panel>
