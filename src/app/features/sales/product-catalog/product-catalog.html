@@ -1,0 +1,159 @@
+<div class="flex min-h-0 flex-1 flex-col gap-3">
+  <!-- Buscador / escáner: al escribir filtra (debounce); Enter intenta leer un código -->
+  <div class="shrink-0">
+    <div class="relative">
+      <svg
+        class="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="m21 21-5.2-5.2M16.5 10.5a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z" />
+      </svg>
+      <input
+        type="text"
+        placeholder="Escanea o busca un producto..."
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+        (keydown.enter)="onScan()"
+        class="w-full rounded-lg border border-gray-200 py-2.5 pr-3 pl-10 text-base text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+      />
+    </div>
+    @if (scanError(); as message) {
+      <p class="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ message }}</p>
+    }
+  </div>
+
+  <!-- Pestañas de categoría -->
+  <div class="flex shrink-0 flex-wrap gap-2">
+    <button
+      type="button"
+      (click)="selectCategory(null)"
+      [class]="
+        categoryId() === null
+          ? 'rounded-full bg-blue-600 px-4 py-1.5 text-sm font-medium text-white'
+          : 'rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50'
+      "
+    >
+      Todos
+    </button>
+    @for (category of categories(); track category.id) {
+      <button
+        type="button"
+        (click)="selectCategory(category.id)"
+        [class]="
+          categoryId() === category.id
+            ? 'rounded-full bg-blue-600 px-4 py-1.5 text-sm font-medium text-white'
+            : 'rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50'
+        "
+      >
+        {{ category.name }}
+      </button>
+    }
+  </div>
+
+  <!-- Grid de productos (área con scroll propio) -->
+  <div class="min-h-0 flex-1 overflow-y-auto">
+    @if (loading()) {
+      <p class="py-10 text-center text-gray-400">Cargando productos...</p>
+    } @else if (error(); as message) {
+      <p class="rounded-lg bg-red-50 px-4 py-3 text-base text-red-700">{{ message }}</p>
+    } @else if (!products().length) {
+      <p class="py-10 text-center text-gray-400">No se encontraron productos.</p>
+    } @else {
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        @for (product of products(); track product.id) {
+          <div class="flex flex-col rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+            <!-- Placeholder de imagen: el API aún no maneja imágenes de producto -->
+            <div
+              class="mb-2 flex aspect-square items-center justify-center rounded-lg border border-gray-100 bg-gray-50 text-gray-300"
+            >
+              <svg
+                class="h-8 w-8"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="m2.25 15.75 5.16-5.16a2.25 2.25 0 0 1 3.18 0l5.16 5.16m-1.5-1.5 1.41-1.41a2.25 2.25 0 0 1 3.18 0l2.91 2.91M3.75 19.5h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm12.75-12h.01"
+                />
+              </svg>
+            </div>
+
+            <p class="line-clamp-2 min-h-[2.5rem] text-sm font-medium text-gray-900">
+              {{ product.name }}
+            </p>
+
+            <div class="mt-1 flex items-center justify-between">
+              <span class="text-lg font-bold text-gray-900">
+                {{ product.salePrice | currency: 'MXN' : 'symbol-narrow' }}
+              </span>
+              <span class="text-xs" [class]="product.stock > 0 ? 'text-gray-400' : 'text-red-500'">
+                {{ product.stock > 0 ? 'Stock ' + product.stock : 'Sin stock' }}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              (click)="add(product)"
+              [disabled]="product.stock <= 0"
+              class="mt-2 flex items-center justify-center gap-1 rounded-lg bg-green-600 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Agregar
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Ventas en espera: deshabilitado (el backend no soporta ventas suspendidas) -->
+  <div class="shrink-0 border-t border-gray-200 pt-3">
+    <div class="mb-2 flex items-center gap-2">
+      <h3 class="text-sm font-semibold text-gray-700">Ventas en espera</h3>
+      <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+        Próximamente
+      </span>
+    </div>
+    <div class="flex gap-3 overflow-x-auto opacity-60">
+      @for (placeholder of heldPlaceholders; track placeholder.folio) {
+        <div
+          class="flex min-w-[220px] items-center justify-between rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-2"
+          title="Próximamente"
+        >
+          <div>
+            <p class="text-sm font-medium text-gray-500">{{ placeholder.folio }}</p>
+            <p class="text-xs text-gray-400">
+              {{ placeholder.amount | currency: 'MXN' : 'symbol-narrow' }}
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled
+            title="Próximamente"
+            class="cursor-not-allowed rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-400"
+          >
+            Recuperar
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,32 @@
+<div class="flex min-h-0 flex-1 flex-col py-4">
+  <div class="flex min-h-0 flex-1 gap-4">
+    <app-product-catalog
+      class="flex min-h-0 min-w-0 flex-1 flex-col"
+      (addProduct)="addProduct($event)"
+    />
+
+    <app-sale-ticket
+      class="flex min-h-0 w-[380px] shrink-0 flex-col"
+      [items]="items()"
+      [customer]="customer()"
+      [subtotal]="subtotal()"
+      [taxes]="taxes()"
+      [total]="total()"
+      [canCheckout]="canCheckout()"
+      (increment)="increment($event)"
+      (decrement)="decrement($event)"
+      (remove)="remove($event)"
+      (checkout)="checkout()"
+      (clearSale)="clearSale()"
+      (changeCustomer)="changeCustomer($event)"
+    />
+  </div>
+</div>
+
+<app-payment-modal
+  [(open)]="paymentOpen"
+  [lines]="items()"
+  [customer]="customer()"
+  (confirmed)="onSaleConfirmed($event)"
+  (cancelled)="paymentOpen.set(false)"
+/>

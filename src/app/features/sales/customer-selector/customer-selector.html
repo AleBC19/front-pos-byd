@@ -1,0 +1,176 @@
+<div class="relative">
+  <label class="mb-1 block text-sm font-medium text-gray-500">Cliente (Opcional)</label>
+
+  <button
+    type="button"
+    (click)="toggle()"
+    class="flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2 text-left text-base transition-colors hover:border-gray-300 focus:border-blue-500 focus:outline-none"
+  >
+    <span class="flex items-center gap-2 truncate" [class]="selected() ? 'text-gray-900' : 'text-gray-400'">
+      <svg
+        class="h-5 w-5 shrink-0 text-gray-400"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0" />
+      </svg>
+      <span class="truncate">{{ selected()?.name ?? 'Selecciona o agrega cliente...' }}</span>
+    </span>
+    <svg
+      class="h-4 w-4 shrink-0 text-gray-400"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    </svg>
+  </button>
+
+  @if (selected()) {
+    <button
+      type="button"
+      (click)="choose(null)"
+      class="mt-1 text-xs text-gray-400 transition-colors hover:text-red-600"
+    >
+      Quitar cliente (venta a público en general)
+    </button>
+  }
+
+  @if (open()) {
+    <!-- Capa para cerrar al hacer clic fuera del menú -->
+    <div class="fixed inset-0 z-10" (click)="close()"></div>
+
+    <div class="absolute right-0 left-0 z-20 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg">
+      <div class="border-b border-gray-100 p-2">
+        <input
+          type="text"
+          placeholder="Buscar cliente..."
+          [value]="search()"
+          (input)="onSearch($any($event.target).value)"
+          class="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+        />
+      </div>
+
+      <div class="max-h-56 overflow-y-auto">
+        <button
+          type="button"
+          (click)="choose(null)"
+          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+        >
+          <svg
+            class="h-4 w-4 text-gray-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M15 19.13v-1.5a4.13 4.13 0 0 0-4.12-4.13H5.63A4.13 4.13 0 0 0 1.5 17.63v1.5M10.88 7.88a3.38 3.38 0 1 1-6.75 0 3.38 3.38 0 0 1 6.75 0Z" />
+          </svg>
+          Público en general
+        </button>
+
+        @if (loading()) {
+          <p class="px-3 py-3 text-center text-sm text-gray-400">Cargando...</p>
+        } @else if (error(); as message) {
+          <p class="px-3 py-2 text-sm text-red-700">{{ message }}</p>
+        } @else {
+          @for (customer of customers(); track customer.id) {
+            <button
+              type="button"
+              (click)="choose(customer)"
+              class="flex w-full flex-col px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50"
+            >
+              <span class="font-medium text-gray-900">{{ customer.name }}</span>
+              @if (customer.phone || customer.email) {
+                <span class="text-xs text-gray-400">{{ customer.phone || customer.email }}</span>
+              }
+            </button>
+          }
+          @if (!customers().length) {
+            <p class="px-3 py-2 text-sm text-gray-400">Sin clientes.</p>
+          }
+        }
+      </div>
+
+      <div class="border-t border-gray-100 p-2">
+        @if (!showCreate()) {
+          <button
+            type="button"
+            (click)="toggleCreate()"
+            class="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Nuevo cliente
+          </button>
+        } @else {
+          <form [formGroup]="form" (ngSubmit)="createCustomer()" class="space-y-2">
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="Nombre *"
+              class="w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none"
+              [class]="invalid('name') ? 'border-red-400' : 'border-gray-200'"
+            />
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="Email"
+              class="w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none"
+              [class]="invalid('email') ? 'border-red-400' : 'border-gray-200'"
+            />
+            <input
+              type="text"
+              formControlName="phone"
+              placeholder="Teléfono"
+              class="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none"
+            />
+            <input
+              type="text"
+              formControlName="taxId"
+              placeholder="RFC"
+              class="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none"
+            />
+            @if (createError(); as message) {
+              <p class="text-xs text-red-700">{{ message }}</p>
+            }
+            <div class="flex justify-end gap-2">
+              <button
+                type="button"
+                (click)="toggleCreate()"
+                class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                [disabled]="saving()"
+                class="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {{ saving() ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+    </div>
+  }
+</div>

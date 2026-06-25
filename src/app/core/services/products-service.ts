@@ -22,6 +22,11 @@ export class ProductsService {
     return this.http.get<ProductDto>(`${this.baseUrl}/${id}`);
   }
 
+  // Busca un producto por su código de barras (solo activos). Para el escáner del punto de venta.
+  getByCode(code: string): Observable<ProductDto> {
+    return this.http.get<ProductDto>(`${this.baseUrl}/by-code/${encodeURIComponent(code)}`);
+  }
+
   createProduct(body: SaveProductRequest): Observable<ProductDto> {
     return this.http.post<ProductDto>(this.baseUrl, body);
   }
