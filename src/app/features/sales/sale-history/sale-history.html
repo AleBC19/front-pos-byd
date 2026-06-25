@@ -1,0 +1,196 @@
+<div class="flex min-h-0 flex-1 gap-4 py-4">
+  <!-- Columna izquierda: historial -->
+  <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+    <div class="shrink-0">
+      <h1 class="text-3xl font-bold text-gray-900">Historial de ventas</h1>
+      <p class="text-base text-gray-500">Consulta, reimprime y gestiona las ventas realizadas</p>
+    </div>
+
+    <div class="flex min-h-0 flex-1 flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
+      <!-- Barra de filtros -->
+      <div class="flex flex-wrap items-end gap-3 border-b border-gray-100 px-4 py-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-500">Desde</label>
+          <input
+            type="date"
+            [value]="from()"
+            (change)="onFromChange($any($event.target).value)"
+            class="rounded-lg border border-gray-200 px-2.5 py-2 text-base text-gray-600 focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-500">Hasta</label>
+          <input
+            type="date"
+            [value]="to()"
+            (change)="onToChange($any($event.target).value)"
+            class="rounded-lg border border-gray-200 px-2.5 py-2 text-base text-gray-600 focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+
+        <div class="relative min-w-[180px] flex-1">
+          <label class="text-sm font-medium text-gray-500">Folio</label>
+          <input
+            type="text"
+            placeholder="Buscar por folio..."
+            [value]="search()"
+            (input)="onSearch($any($event.target).value)"
+            class="mt-1 w-full rounded-lg border border-gray-200 py-2 pr-9 pl-3 text-base text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+          />
+          <svg
+            class="absolute right-3 bottom-2.5 h-4 w-4 text-gray-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m21 21-5.2-5.2M16.5 10.5a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z" />
+          </svg>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-500">Estado</label>
+          <select
+            (change)="onStatusChange($any($event.target).value)"
+            class="min-w-[140px] rounded-lg border border-gray-200 px-2.5 py-2 text-base text-gray-600 focus:border-blue-500 focus:outline-none"
+          >
+            <option value="all" [selected]="status() === 'all'">Todos</option>
+            <option [value]="SaleStatus.Paid">Completada</option>
+            <option [value]="SaleStatus.Pending">En espera</option>
+            <option [value]="SaleStatus.Cancelled">Cancelada</option>
+          </select>
+        </div>
+
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="rounded-lg border border-gray-200 px-3 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+
+      @if (error(); as message) {
+        <div class="border-b border-red-100 bg-red-50 px-4 py-2 text-base text-red-700">
+          {{ message }}
+        </div>
+      }
+
+      <div class="min-h-0 flex-1 overflow-auto">
+        <table class="w-full text-left text-base">
+          <thead>
+            <tr class="border-b border-gray-100 text-base text-gray-500">
+              <th class="px-4 py-2.5 font-medium">Folio</th>
+              <th class="px-3 py-2.5 font-medium">Fecha / Hora</th>
+              <th class="px-3 py-2.5 font-medium">Cliente</th>
+              <th class="px-3 py-2.5 font-medium">Vendedor</th>
+              <th class="px-3 py-2.5 font-medium">Método</th>
+              <th class="px-3 py-2.5 text-right font-medium">Total</th>
+              <th class="px-3 py-2.5 font-medium">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            @if (loading()) {
+              <tr>
+                <td colspan="7" class="px-4 py-10 text-center text-gray-400">Cargando ventas...</td>
+              </tr>
+            } @else if (!items().length) {
+              <tr>
+                <td colspan="7" class="px-4 py-10 text-center text-gray-400">
+                  No se encontraron ventas.
+                </td>
+              </tr>
+            } @else {
+              @for (sale of items(); track sale.id) {
+                <tr
+                  (click)="select(sale.id)"
+                  class="cursor-pointer transition-colors hover:bg-blue-50/50"
+                  [class.bg-blue-50]="sale.id === selectedId()"
+                >
+                  <td class="px-4 py-2.5 font-medium text-gray-900">{{ sale.folio }}</td>
+                  <td class="px-3 py-2.5 text-gray-600">{{ sale.date | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td class="px-3 py-2.5 text-gray-600">{{ sale.customerName }}</td>
+                  <td class="px-3 py-2.5 text-gray-600">{{ sale.cashier }}</td>
+                  <td class="px-3 py-2.5 text-gray-600">{{ paymentLabels[sale.paymentMethod] }}</td>
+                  <td class="px-3 py-2.5 text-right font-semibold text-gray-900">
+                    {{ sale.total | currency: 'MXN' : 'symbol-narrow' }}
+                  </td>
+                  <td class="px-3 py-2.5">
+                    <span
+                      class="inline-block rounded-full px-2.5 py-0.5 text-sm font-medium"
+                      [class]="statusClass(sale.status)"
+                    >
+                      {{ statusLabels[sale.status] }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-4 py-3">
+        <p class="text-base text-gray-500">
+          Mostrando {{ rangeStart() }} a {{ rangeEnd() }} de {{ totalCount() }} ventas
+        </p>
+
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            (click)="goToPage(page() - 1)"
+            [disabled]="page() <= 1"
+            class="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-base text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Página anterior"
+          >
+            ‹
+          </button>
+          @for (item of pageItems(); track $index) {
+            @if (item === '…') {
+              <span class="px-1 text-base text-gray-400">…</span>
+            } @else {
+              <button
+                type="button"
+                (click)="goToPage(item)"
+                [class]="
+                  item === page()
+                    ? 'flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 text-base font-medium text-white'
+                    : 'flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-base text-gray-600 hover:bg-gray-50'
+                "
+              >
+                {{ item }}
+              </button>
+            }
+          }
+          <button
+            type="button"
+            (click)="goToPage(page() + 1)"
+            [disabled]="page() >= totalPages()"
+            class="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-base text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Página siguiente"
+          >
+            ›
+          </button>
+        </div>
+
+        <select
+          (change)="onPageSizeChange($any($event.target).value)"
+          class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-base text-gray-600 focus:border-blue-500 focus:outline-none"
+        >
+          @for (size of pageSizes; track size) {
+            <option [value]="size" [selected]="size === pageSize()">{{ size }} por página</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Columna derecha: detalle de venta -->
+  <div class="hidden min-h-0 w-[420px] shrink-0 lg:block">
+    <app-sale-detail [saleId]="selectedId()" (changed)="onSaleChanged()" />
+  </div>
+</div>
