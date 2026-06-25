@@ -3,7 +3,6 @@ import { Component, computed, effect, inject, input, model, output, signal } fro
 import { extractApiError } from '../../../core/models/api';
 import { CustomerDto } from '../../../core/models/customer';
 import {
-  CreateSaleRequest,
   PAYMENT_METHOD_LABELS,
   PaymentMethod,
   QUICK_CASH_AMOUNTS,
@@ -15,15 +14,7 @@ import {
 import { SalesService } from '../../../core/services/sales-service';
 import { Modal } from '../../../shared/components/modal/modal';
 import { CartItem, computeTotals, toCents } from '../cart-item';
-
-// Escapa texto que se inyecta en la ventana de impresión del recibo.
-function escapeHtml(value: string): string {
-  return value.replace(
-    /[&<>"']/g,
-    (char) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] ?? char,
-  );
-}
+import { printReceipt } from '../receipt-printer';
 
 // Una fila del pago dividido (mixto).
 interface SplitRow {
@@ -46,6 +37,9 @@ export class PaymentModal {
   readonly open = model(false);
   readonly lines = input<CartItem[]>([]);
   readonly customer = input<CustomerDto | null>(null);
+  // Si se indica, el modal cobra una venta en espera (POST /sales/{id}/resume) en vez de
+  // registrar una venta nueva. Las líneas ya quedaron fijadas al dejarla en espera.
+  readonly resumeSaleId = input<number | null>(null);
 
   readonly confirmed = output<SaleDto>();
   readonly cancelled = output<void>();
@@ -171,21 +165,26 @@ export class PaymentModal {
         ? (this.amountReceived() ?? 0)
         : this.grandTotal();
 
-    const body: CreateSaleRequest = {
-      customerId: this.customer()?.id ?? null,
-      amountReceived,
-      payments,
-      details: this.lines().map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-      })),
-    };
+    // Venta en espera: solo se aportan los pagos (el carrito ya quedó fijado). Venta
+    // nueva: se envía el carrito completo.
+    const resumeId = this.resumeSaleId();
+    const request$ = resumeId
+      ? this.salesService.resumeSale(resumeId, { amountReceived, payments })
+      : this.salesService.createSale({
+          customerId: this.customer()?.id ?? null,
+          amountReceived,
+          payments,
+          details: this.lines().map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })),
+        });
 
     this.processing.set(true);
     this.error.set(null);
 
-    this.salesService.createSale(body).subscribe({
+    request$.subscribe({
       next: (sale) => {
         this.processing.set(false);
         this.sale.set(sale);
@@ -205,17 +204,10 @@ export class PaymentModal {
     if (!receipt) {
       return;
     }
-    const win = window.open('', '_blank', 'width=380,height=640');
-    if (!win) {
-      this.error.set(
-        'No se pudo abrir la ventana de impresión. Revise el bloqueador de ventanas emergentes.',
-      );
-      return;
+    const error = printReceipt(receipt);
+    if (error) {
+      this.error.set(error);
     }
-    win.document.write(this.buildReceiptHtml(receipt));
-    win.document.close();
-    win.focus();
-    win.print();
   }
 
   protected sendEmail(): void {
@@ -285,58 +277,5 @@ export class PaymentModal {
     this.emailSending.set(false);
     this.emailSent.set(false);
     this.emailError.set(null);
-  }
-
-  private buildReceiptHtml(receipt: ReceiptDto): string {
-    const money = (value: number) => '$' + value.toFixed(2);
-    const lines = receipt.lines
-      .map(
-        (line) =>
-          `<tr><td>${line.quantity}x ${escapeHtml(line.product)}</td>` +
-          `<td style="text-align:right">${money(line.lineTotal)}</td></tr>`,
-      )
-      .join('');
-    const payments = receipt.payments
-      .map(
-        (payment) =>
-          `<tr><td>${escapeHtml(this.labels[payment.method])}</td>` +
-          `<td style="text-align:right">${money(payment.amount)}</td></tr>`,
-      )
-      .join('');
-
-    return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(
-      receipt.folio,
-    )}</title><style>
-      body{font-family:'Courier New',monospace;font-size:12px;width:300px;margin:0 auto;padding:8px;color:#000}
-      h1{font-size:14px;text-align:center;margin:4px 0}
-      p{margin:2px 0}
-      .muted{color:#555;text-align:center}
-      table{width:100%;border-collapse:collapse}
-      hr{border:none;border-top:1px dashed #000;margin:6px 0}
-      .row{display:flex;justify-content:space-between}
-      .total{font-size:14px;font-weight:bold}
-    </style></head><body>
-      <h1>${escapeHtml(receipt.businessName)}</h1>
-      ${receipt.address ? `<p class="muted">${escapeHtml(receipt.address)}</p>` : ''}
-      ${receipt.phone ? `<p class="muted">Tel: ${escapeHtml(receipt.phone)}</p>` : ''}
-      ${receipt.taxId ? `<p class="muted">RFC: ${escapeHtml(receipt.taxId)}</p>` : ''}
-      <hr>
-      <p>Folio: ${escapeHtml(receipt.folio)}</p>
-      <p>Fecha: ${new Date(receipt.date).toLocaleString('es-MX')}</p>
-      <p>Cajero: ${escapeHtml(receipt.cashier)}</p>
-      <p>Cliente: ${escapeHtml(receipt.customerName)}</p>
-      <hr>
-      <table>${lines}</table>
-      <hr>
-      <div class="row"><span>Subtotal</span><span>${money(receipt.subtotal)}</span></div>
-      <div class="row"><span>IVA</span><span>${money(receipt.taxes)}</span></div>
-      <div class="row total"><span>TOTAL</span><span>${money(receipt.total)}</span></div>
-      <hr>
-      <table>${payments}</table>
-      <div class="row"><span>Recibido</span><span>${money(receipt.amountReceived)}</span></div>
-      <div class="row"><span>Cambio</span><span>${money(receipt.change)}</span></div>
-      <hr>
-      <p class="muted">¡Gracias por su compra!</p>
-    </body></html>`;
   }
 }

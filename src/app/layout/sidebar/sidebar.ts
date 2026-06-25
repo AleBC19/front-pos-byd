@@ -1,12 +1,20 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth-service';
 import { CASH_REGISTER } from '../../features/dashboard/data/dashboard-mock';
+
+interface NavChild {
+  label: string;
+  route: string;
+  icon: string;
+}
 
 interface NavItem {
   label: string;
   icon: string;
   route: string | null;
+  // Sub-ítems del grupo expandible (p. ej. Ventas → Nueva venta, Historial, Devoluciones).
+  children?: NavChild[];
 }
 
 // Navegación lateral con tarjeta de cierre de caja.
@@ -21,6 +29,37 @@ export class Sidebar {
   private readonly router = inject(Router);
 
   protected readonly cashRegister = CASH_REGISTER;
+
+  // Grupos expandidos del menú. Se abre "Ventas" si la ruta actual es de ventas.
+  protected readonly expanded = signal<Set<string>>(
+    new Set(this.router.url.startsWith('/sales') ? ['Ventas'] : []),
+  );
+
+  // Clic en el grupo (p. ej. Ventas): navega a la primera subopción (Nueva venta)
+  // y deja el grupo expandido. El chevron se usa para colapsar/expandir sin navegar.
+  protected openGroup(item: NavItem): void {
+    const target = item.children?.[0]?.route;
+    if (target) {
+      this.router.navigate([target]);
+    }
+    this.expanded.update((current) => new Set(current).add(item.label));
+  }
+
+  protected toggle(label: string): void {
+    this.expanded.update((current) => {
+      const next = new Set(current);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      return next;
+    });
+  }
+
+  protected isExpanded(label: string): boolean {
+    return this.expanded().has(label);
+  }
 
   // Cierra sesión contra el API; navega a /login aunque la petición falle
   // (la sesión local ya quedó limpia por el servicio).
@@ -40,8 +79,25 @@ export class Sidebar {
     },
     {
       label: 'Ventas',
-      route: '/sales',
+      route: null,
       icon: 'M2.25 3h1.4a1.1 1.1 0 0 1 1.06.8L5.4 6m0 0 1.8 6.6a1.1 1.1 0 0 0 1.06.8h8.94a1.1 1.1 0 0 0 1.04-.74L20.6 6.7A.55.55 0 0 0 20.08 6H5.4Zm2.1 13.5a1.13 1.13 0 1 1-2.25 0 1.13 1.13 0 0 1 2.25 0Zm10.5 0a1.13 1.13 0 1 1-2.25 0 1.13 1.13 0 0 1 2.25 0Z',
+      children: [
+        {
+          label: 'Nueva venta',
+          route: '/sales',
+          icon: 'M12 4.5v15m7.5-7.5h-15',
+        },
+        {
+          label: 'Historial de ventas',
+          route: '/sales/history',
+          icon: 'M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z',
+        },
+        {
+          label: 'Devoluciones',
+          route: '/sales/returns',
+          icon: 'M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3',
+        },
+      ],
     },
     {
       label: 'Productos',

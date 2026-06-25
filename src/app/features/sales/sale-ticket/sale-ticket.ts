@@ -23,6 +23,7 @@ export class SaleTicket {
   readonly decrement = output<number>();
   readonly remove = output<number>();
   readonly checkout = output<void>();
+  readonly hold = output<void>();
   readonly clearSale = output<void>();
   readonly changeCustomer = output<CustomerDto | null>();
 }

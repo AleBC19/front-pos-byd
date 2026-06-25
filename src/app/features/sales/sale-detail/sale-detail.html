@@ -1,0 +1,189 @@
+<div class="flex h-full flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
+  @if (loading()) {
+    <div class="flex flex-1 items-center justify-center py-16 text-gray-400">
+      Cargando detalle...
+    </div>
+  } @else if (!sale()) {
+    <div class="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-16 text-center text-gray-400">
+      <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" />
+      </svg>
+      <p class="text-sm">Selecciona una venta para ver el detalle.</p>
+    </div>
+  } @else if (sale(); as sale) {
+    <!-- Encabezado -->
+    <div class="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
+      <h2 class="text-xl font-bold text-gray-900">Detalle de venta #{{ sale.folio }}</h2>
+      <span
+        class="inline-block rounded-full px-2.5 py-0.5 text-sm font-medium"
+        [class]="
+          sale.status === SaleStatus.Paid
+            ? 'bg-green-100 text-green-700'
+            : sale.status === SaleStatus.Pending
+              ? 'bg-amber-100 text-amber-700'
+              : 'bg-red-100 text-red-700'
+        "
+      >
+        {{ statusLabels[sale.status] }}
+      </span>
+    </div>
+
+    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+      @if (error(); as message) {
+        <div class="mb-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-base text-red-700">
+          {{ message }}
+        </div>
+      }
+
+      <!-- Datos de la venta -->
+      <div class="grid grid-cols-2 gap-y-2 text-base">
+        <div>
+          <p class="text-sm text-gray-500">Fecha</p>
+          <p class="font-medium text-gray-900">{{ sale.date | date: 'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Vendedor</p>
+          <p class="font-medium text-gray-900">{{ sale.cashier }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Cliente</p>
+          <p class="font-medium text-gray-900">{{ sale.customerName }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Método de pago</p>
+          <p class="font-medium text-gray-900">{{ labels[sale.paymentMethod] }}</p>
+        </div>
+      </div>
+
+      <!-- Productos -->
+      <div class="mt-4 overflow-hidden rounded-xl border border-gray-100">
+        <table class="w-full text-left text-base">
+          <thead>
+            <tr class="border-b border-gray-100 bg-gray-50 text-sm text-gray-500">
+              <th class="px-3 py-2 font-medium">Producto</th>
+              <th class="px-3 py-2 text-center font-medium">Cant.</th>
+              <th class="px-3 py-2 text-right font-medium">P. unit.</th>
+              <th class="px-3 py-2 text-right font-medium">Desc.</th>
+              <th class="px-3 py-2 text-right font-medium">Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            @for (line of sale.details; track line.productId) {
+              <tr>
+                <td class="px-3 py-2 font-medium text-gray-900">{{ line.product }}</td>
+                <td class="px-3 py-2 text-center text-gray-600">{{ line.quantity }}</td>
+                <td class="px-3 py-2 text-right text-gray-600">
+                  {{ line.unitPrice | currency: 'MXN' : 'symbol-narrow' }}
+                </td>
+                <td class="px-3 py-2 text-right text-gray-600">
+                  {{ line.discount | currency: 'MXN' : 'symbol-narrow' }}
+                </td>
+                <td class="px-3 py-2 text-right font-medium text-gray-900">
+                  {{ line.lineTotal | currency: 'MXN' : 'symbol-narrow' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Resumen -->
+      <div class="mt-4 space-y-1.5">
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Subtotal</span>
+          <span>{{ sale.subtotal | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        <div class="flex justify-between text-base text-gray-600">
+          <span>IVA (16%)</span>
+          <span>{{ sale.taxes | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        @if (sale.totalDiscount > 0) {
+          <div class="flex justify-between text-base text-gray-600">
+            <span>Descuento</span>
+            <span>-{{ sale.totalDiscount | currency: 'MXN' : 'symbol-narrow' }}</span>
+          </div>
+        }
+        <div class="flex justify-between border-t border-gray-100 pt-1.5 text-lg font-bold text-gray-900">
+          <span>Total</span>
+          <span>{{ sale.total | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        @if (sale.amountReceived > 0) {
+          <div class="flex justify-between text-sm text-gray-500">
+            <span>Recibido</span>
+            <span>{{ sale.amountReceived | currency: 'MXN' : 'symbol-narrow' }}</span>
+          </div>
+          <div class="flex justify-between text-sm text-gray-500">
+            <span>Cambio</span>
+            <span>{{ sale.change | currency: 'MXN' : 'symbol-narrow' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    @if (sale.status === SaleStatus.Paid) {
+      <div class="shrink-0 space-y-2 border-t border-gray-100 px-5 py-4">
+        <button
+          type="button"
+          (click)="reprint()"
+          class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-base font-semibold text-white transition-colors hover:bg-blue-700"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.75 7.5V3.75h10.5V7.5m0 9.75h2.25a1.5 1.5 0 0 0 1.5-1.5v-5.25a1.5 1.5 0 0 0-1.5-1.5H4.5a1.5 1.5 0 0 0-1.5 1.5v5.25a1.5 1.5 0 0 0 1.5 1.5h2.25m0-3.75h10.5v6.75H6.75V13.5Z" />
+          </svg>
+          Reimprimir recibo
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            (click)="openReturn()"
+            class="rounded-lg border border-blue-200 py-2.5 text-base font-medium text-blue-600 transition-colors hover:bg-blue-50"
+          >
+            Procesar devolución
+          </button>
+          <button
+            type="button"
+            (click)="askCancel()"
+            class="rounded-lg border border-red-200 py-2.5 text-base font-medium text-red-600 transition-colors hover:bg-red-50"
+          >
+            Cancelar venta
+          </button>
+        </div>
+      </div>
+    }
+  }
+</div>
+
+<!-- Modal de devolución -->
+<app-return-modal [(open)]="returnOpen" [sale]="sale()" (confirmed)="onReturned()" />
+
+<!-- Confirmación de cancelación -->
+<app-modal [(open)]="cancelOpen" title="Cancelar venta" size="md">
+  <p class="text-base text-gray-600">
+    ¿Seguro que deseas cancelar la venta
+    <span class="font-semibold text-gray-900">#{{ sale()?.folio }}</span>? Se repondrá el stock y
+    la venta quedará marcada como cancelada.
+  </p>
+  @if (cancelError(); as message) {
+    <div class="mt-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-base text-red-700">
+      {{ message }}
+    </div>
+  }
+  <div class="mt-5 flex justify-end gap-2">
+    <button
+      type="button"
+      (click)="cancelOpen.set(false)"
+      class="rounded-lg border border-gray-200 px-4 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+    >
+      Volver
+    </button>
+    <button
+      type="button"
+      (click)="confirmCancel()"
+      [disabled]="cancelling()"
+      class="rounded-lg bg-red-600 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {{ cancelling() ? 'Cancelando...' : 'Cancelar venta' }}
+    </button>
+  </div>
+</app-modal>

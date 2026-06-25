@@ -1,0 +1,105 @@
+<app-modal [(open)]="open" title="Procesar devolución" size="lg">
+  @if (sale(); as sale) {
+    <div class="space-y-4">
+      <p class="text-base text-gray-600">
+        Venta <span class="font-semibold text-gray-900">{{ sale.folio }}</span> · selecciona los
+        artículos y la cantidad a devolver.
+      </p>
+
+      @if (error(); as message) {
+        <div class="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-base text-red-700">
+          {{ message }}
+        </div>
+      }
+
+      <!-- Artículos -->
+      <div class="overflow-hidden rounded-xl border border-gray-200">
+        <table class="w-full text-left text-base">
+          <thead>
+            <tr class="border-b border-gray-100 bg-gray-50 text-sm text-gray-500">
+              <th class="px-3 py-2 font-medium">Producto</th>
+              <th class="px-3 py-2 text-center font-medium">Vendidos</th>
+              <th class="px-3 py-2 text-right font-medium">P. unit.</th>
+              <th class="px-3 py-2 text-center font-medium">Devolver</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            @for (line of lines(); track line.productId) {
+              <tr>
+                <td class="px-3 py-2 font-medium text-gray-900">{{ line.product }}</td>
+                <td class="px-3 py-2 text-center text-gray-600">{{ line.sold }}</td>
+                <td class="px-3 py-2 text-right text-gray-600">
+                  {{ line.unitPrice | currency: 'MXN' : 'symbol-narrow' }}
+                </td>
+                <td class="px-3 py-2">
+                  <div class="flex justify-center">
+                    <input
+                      type="number"
+                      min="0"
+                      [max]="line.sold"
+                      [value]="line.quantity"
+                      (input)="setQuantity(line.productId, $any($event.target).value)"
+                      class="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-center text-base text-gray-700 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Motivo -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-500">Motivo de la devolución *</label>
+        <input
+          type="text"
+          maxlength="300"
+          placeholder="Ej. Producto defectuoso"
+          [value]="reason()"
+          (input)="reason.set($any($event.target).value)"
+          class="w-full rounded-lg border border-gray-200 px-3 py-2 text-base text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+        />
+      </div>
+
+      <!-- Notas -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-500">Notas (opcional)</label>
+        <textarea
+          rows="2"
+          maxlength="1000"
+          [value]="notes()"
+          (input)="notes.set($any($event.target).value)"
+          class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-base text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+        ></textarea>
+      </div>
+
+      <!-- Total y acciones -->
+      <div class="flex items-center justify-between border-t border-gray-100 pt-4">
+        <div>
+          <p class="text-sm text-gray-500">Total a devolver</p>
+          <p class="text-2xl font-bold text-gray-900">
+            {{ total() | currency: 'MXN' : 'symbol-narrow' }}
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="open.set(false)"
+            class="rounded-lg border border-gray-200 px-4 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="confirm()"
+            [disabled]="!canConfirm()"
+            class="rounded-lg bg-blue-600 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {{ processing() ? 'Procesando...' : 'Confirmar devolución' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</app-modal>

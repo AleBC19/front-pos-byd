@@ -15,7 +15,74 @@
   <!-- Navegación -->
   <nav class="flex flex-col gap-1 px-3">
     @for (item of navItems; track item.label) {
-      @if (item.route) {
+      @if (item.children) {
+        <!-- Grupo expandible (p. ej. Ventas): el cuerpo navega a la primera subopción
+             y expande; el chevron solo colapsa/expande. -->
+        <div class="flex items-center rounded-lg text-gray-600 transition-colors hover:bg-gray-50">
+          <button
+            type="button"
+            (click)="openGroup(item)"
+            class="flex flex-1 items-center gap-3 px-3 py-2 text-left text-base"
+          >
+            <svg
+              class="h-5 w-5 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path [attr.d]="item.icon" />
+            </svg>
+            <span>{{ item.label }}</span>
+          </button>
+          <button
+            type="button"
+            (click)="toggle(item.label)"
+            class="px-2 py-2"
+            [attr.aria-label]="(isExpanded(item.label) ? 'Colapsar ' : 'Expandir ') + item.label"
+          >
+            <svg
+              class="h-4 w-4 shrink-0 transition-transform"
+              [class.rotate-180]="isExpanded(item.label)"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+        @if (isExpanded(item.label)) {
+          <div class="flex flex-col gap-1 pl-4">
+            @for (child of item.children; track child.route) {
+              <a
+                [routerLink]="child.route"
+                routerLinkActive="bg-blue-50 font-semibold text-blue-600"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="flex items-center gap-3 rounded-lg px-3 py-2 text-base text-gray-600 transition-colors hover:bg-gray-50"
+              >
+                <svg
+                  class="h-4 w-4 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path [attr.d]="child.icon" />
+                </svg>
+                {{ child.label }}
+              </a>
+            }
+          </div>
+        }
+      } @else if (item.route) {
         <a
           [routerLink]="item.route"
           routerLinkActive="bg-blue-50 font-semibold text-blue-600"

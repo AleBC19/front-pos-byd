@@ -1,8 +1,11 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { extractApiError } from '../../../core/models/api';
 import { CustomerDto } from '../../../core/models/customer';
 import { ProductDto } from '../../../core/models/product';
-import { SaleDto } from '../../../core/models/sale';
+import { SaleDto, SaleStatus } from '../../../core/models/sale';
+import { SalesService } from '../../../core/services/sales-service';
 import { CartItem, computeTotals } from '../cart-item';
+import { HeldSalesPanel } from '../held-sales/held-sales-panel';
 import { PaymentModal } from '../payment-modal/payment-modal';
 import { ProductCatalog } from '../product-catalog/product-catalog';
 import { SaleTicket } from '../sale-ticket/sale-ticket';
@@ -14,18 +17,46 @@ import { SaleTicket } from '../sale-ticket/sale-ticket';
   selector: 'app-new-sale',
   templateUrl: './new-sale.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
-  imports: [ProductCatalog, SaleTicket, PaymentModal],
+  imports: [ProductCatalog, SaleTicket, PaymentModal, HeldSalesPanel],
 })
 export class NewSale {
+  private readonly salesService = inject(SalesService);
+
   protected readonly items = signal<CartItem[]>([]);
   protected readonly customer = signal<CustomerDto | null>(null);
   protected readonly paymentOpen = signal(false);
+
+  // Estado de "dejar en espera".
+  protected readonly holding = signal(false);
+  protected readonly holdError = signal<string | null>(null);
+
+  // Panel de ventas en espera y su contador (badge).
+  protected readonly heldPanelOpen = signal(false);
+  protected readonly heldCount = signal(0);
+  protected readonly heldRefresh = signal(0);
+
+  // Cobro de una venta en espera (modo reanudar): líneas fijadas + id de la venta.
+  protected readonly resumeSaleId = signal<number | null>(null);
+  protected readonly resumeLines = signal<CartItem[]>([]);
+
+  // Líneas y cliente que recibe el modal de cobro: las de la venta en espera al
+  // reanudar, o el carrito actual en una venta nueva.
+  protected readonly paymentLines = computed(() =>
+    this.resumeSaleId() ? this.resumeLines() : this.items(),
+  );
+  protected readonly paymentCustomer = computed(() =>
+    this.resumeSaleId() ? null : this.customer(),
+  );
 
   private readonly totals = computed(() => computeTotals(this.items()));
   protected readonly subtotal = computed(() => this.totals().subtotalCents / 100);
   protected readonly taxes = computed(() => this.totals().taxesCents / 100);
   protected readonly total = computed(() => this.totals().totalCents / 100);
   protected readonly canCheckout = computed(() => this.items().length > 0);
+
+  constructor() {
+    this.refreshHeldCount();
+  }
 
   // Agrega un producto: si ya está en el ticket, incrementa (topado al stock).
   protected addProduct(product: ProductDto): void {
@@ -87,14 +118,91 @@ export class NewSale {
 
   protected checkout(): void {
     if (this.canCheckout()) {
+      // Venta nueva: asegura que el modal no esté en modo reanudar.
+      this.resumeSaleId.set(null);
+      this.resumeLines.set([]);
       this.paymentOpen.set(true);
     }
   }
 
-  // Venta registrada: limpia el ticket para iniciar una nueva.
+  // Deja la venta actual en espera (sin cobrar): la guarda en el backend y limpia el ticket.
+  protected hold(): void {
+    if (!this.canCheckout() || this.holding()) {
+      return;
+    }
+    this.holding.set(true);
+    this.holdError.set(null);
+
+    this.salesService
+      .holdSale({
+        customerId: this.customer()?.id ?? null,
+        details: this.items().map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+      })
+      .subscribe({
+        next: () => {
+          this.holding.set(false);
+          this.items.set([]);
+          this.customer.set(null);
+          this.heldRefresh.update((token) => token + 1);
+          this.refreshHeldCount();
+        },
+        error: (err) => {
+          this.holding.set(false);
+          this.holdError.set(extractApiError(err).message);
+        },
+      });
+  }
+
+  protected openHeld(): void {
+    this.heldPanelOpen.set(true);
+  }
+
+  // Cobrar una venta en espera: carga sus líneas y abre el modal en modo reanudar.
+  protected onCharge(saleId: number): void {
+    this.salesService.getSale(saleId).subscribe({
+      next: (sale) => {
+        this.resumeLines.set(
+          sale.details.map((detail) => ({
+            productId: detail.productId,
+            code: '',
+            name: detail.product,
+            unitPrice: detail.unitPrice,
+            quantity: detail.quantity,
+            stock: detail.quantity,
+          })),
+        );
+        this.resumeSaleId.set(sale.id);
+        this.paymentOpen.set(true);
+      },
+      error: (err) => this.holdError.set(extractApiError(err).message),
+    });
+  }
+
+  // Venta registrada o reanudada: limpia el estado para iniciar una nueva.
   protected onSaleConfirmed(_sale: SaleDto): void {
     this.items.set([]);
     this.customer.set(null);
     this.paymentOpen.set(false);
+    this.resumeSaleId.set(null);
+    this.resumeLines.set([]);
+    this.refreshHeldCount();
+  }
+
+  // Una venta en espera fue descartada desde el panel: solo actualiza el contador
+  // (no toca el ticket actual).
+  protected onHeldChanged(): void {
+    this.refreshHeldCount();
+  }
+
+  // Actualiza el contador del badge de ventas en espera.
+  private refreshHeldCount(): void {
+    this.salesService.getSales({ status: SaleStatus.Pending, pageSize: 20 }).subscribe({
+      next: (response) => this.heldCount.set(response.totalCount),
+      error: () => this.heldCount.set(0),
+    });
   }
 }
