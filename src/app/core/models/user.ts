@@ -1,3 +1,5 @@
+import { MenuItem } from './menu';
+
 // Código de permiso del catálogo del API (p. ej. "administrar_usuarios").
 // El API los entrega en User.permissions al iniciar sesión.
 export type Permission = string;
@@ -9,6 +11,8 @@ export interface User {
   role: string;
   permissions: Permission[];
 }
+
+// (El menú no vive en User: pertenece a la sesión, ver Session.menu.)
 
 export interface LoginCredentials {
   username: string;
@@ -38,6 +42,8 @@ export interface LoginResponse {
   role: string;
   // Códigos de permiso del usuario (catálogo Permissions del API).
   permissions: string[];
+  // Menú de navegación ya filtrado por permisos (árbol anidado).
+  menu: MenuItem[];
 }
 
 // Sesión persistida en localStorage (pos.session)
@@ -45,6 +51,8 @@ export interface Session {
   token: string;
   expiresAtUtc: string;
   user: User;
+  // Menú entregado en el login; se persiste para sobrevivir recargas.
+  menu: MenuItem[];
 }
 
 // ---------------------------------------------------------------------------

@@ -29,6 +29,9 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this.session() !== null);
   readonly token = computed(() => this.session()?.token ?? null);
 
+  // Menú de navegación entregado en el login (ya filtrado por permisos en el API).
+  readonly menu = computed(() => this.session()?.menu ?? []);
+
   // Usuarios que ya iniciaron sesión en este equipo (acceso rápido por PIN).
   readonly knownUsers = this.knownUsersSignal.asReadonly();
 
@@ -90,6 +93,7 @@ export class AuthService {
   }
 
   private toSession(response: LoginResponse): Session {
+    const menu = response.menu ?? [];
     return {
       token: response.token,
       expiresAtUtc: response.expiresAtUtc,
@@ -100,6 +104,7 @@ export class AuthService {
         role: response.role,
         permissions: response.permissions ?? [],
       },
+      menu,
     };
   }
 

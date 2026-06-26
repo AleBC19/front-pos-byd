@@ -14,8 +14,8 @@
 
   <!-- Navegación -->
   <nav class="flex flex-col gap-1 px-3">
-    @for (item of navItems; track item.label) {
-      @if (item.children) {
+    @for (item of navItems(); track item.label) {
+      @if (item.children.length) {
         <!-- Grupo expandible (p. ej. Ventas): el cuerpo navega a la primera subopción
              y expande; el chevron solo colapsa/expande. -->
         <div class="flex items-center rounded-lg text-gray-600 transition-colors hover:bg-gray-50">
