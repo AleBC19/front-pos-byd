@@ -7,3 +7,4 @@ export * from './role';
 export * from './sale';
 export * from './return';
 export * from './customer';
+export * from './cash-register';

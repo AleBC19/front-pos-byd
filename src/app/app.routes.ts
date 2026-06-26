@@ -43,6 +43,13 @@ export const routes: Routes = [
         path: 'users',
         loadChildren: () => import('./features/users/users.routes').then((m) => m.USERS_ROUTES),
       },
+      {
+        path: 'cash-register',
+        loadChildren: () =>
+          import('./features/cash-register/cash-register.routes').then(
+            (m) => m.CASH_REGISTER_ROUTES,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

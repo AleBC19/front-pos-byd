@@ -1,0 +1,242 @@
+<div class="flex min-h-0 flex-1 flex-col gap-4 py-4">
+  <div class="shrink-0">
+    <h1 class="text-3xl font-bold text-gray-900">Cerrar turno</h1>
+    <p class="text-base text-gray-500">Cuenta el efectivo, cierra la caja e imprime el corte</p>
+  </div>
+
+  <div class="min-h-0 flex-1 overflow-y-auto">
+    @if (loading()) {
+      <div class="mx-auto w-full max-w-xl rounded-xl border border-gray-200 bg-white p-8 text-center text-gray-400 shadow-sm">
+        Cargando turno actual...
+      </div>
+    } @else if (closed(); as summary) {
+      <!-- Éxito: turno cerrado, muestra el corte -->
+      <div class="mx-auto w-full max-w-xl">
+        <div class="rounded-xl border border-green-200 bg-white p-6 shadow-sm">
+          <div class="flex items-center gap-3">
+            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-700">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            </span>
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">Turno #{{ summary.id }} cerrado</h2>
+              <p class="text-base text-gray-500">Cierre: {{ summary.closedAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-1.5 border-t border-gray-100 pt-4 text-base">
+            <div class="flex justify-between text-gray-600">
+              <span>Efectivo esperado</span>
+              <span>{{ summary.expectedCash | currency: 'MXN' : 'symbol-narrow' }}</span>
+            </div>
+            <div class="flex justify-between text-gray-600">
+              <span>Efectivo contado</span>
+              <span>{{ summary.declaredAmount | currency: 'MXN' : 'symbol-narrow' }}</span>
+            </div>
+            <div
+              class="flex justify-between border-t border-gray-100 pt-1.5 text-lg font-bold"
+              [class]="summary.difference === 0 ? 'text-gray-900' : 'text-red-600'"
+            >
+              <span>Diferencia</span>
+              <span>{{ summary.difference | currency: 'MXN' : 'symbol-narrow' }}</span>
+            </div>
+          </div>
+
+          <div class="mt-5 flex gap-2">
+            <button
+              type="button"
+              (click)="print()"
+              class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-base font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6.75 7.5V3.75h10.5V7.5m0 9.75h2.25a1.5 1.5 0 0 0 1.5-1.5v-5.25a1.5 1.5 0 0 0-1.5-1.5H4.5a1.5 1.5 0 0 0-1.5 1.5v5.25a1.5 1.5 0 0 0 1.5 1.5h2.25m0-3.75h10.5v6.75H6.75V13.5Z" />
+              </svg>
+              Imprimir corte
+            </button>
+            <a
+              routerLink="/cash-register/cierres"
+              class="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-center text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+            >
+              Ver cierres
+            </a>
+          </div>
+        </div>
+      </div>
+    } @else if (!current()) {
+      <!-- No hay turno abierto -->
+      <div class="mx-auto w-full max-w-xl rounded-xl border border-amber-200 bg-white p-6 shadow-sm">
+        <div class="flex items-center gap-3">
+          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 9v3.75m0 3.75h.01M10.34 3.94 1.7 18.66A1.5 1.5 0 0 0 3 21h18a1.5 1.5 0 0 0 1.3-2.34L13.66 3.94a1.5 1.5 0 0 0-2.62 0Z" />
+            </svg>
+          </span>
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">No hay un turno abierto</h2>
+            <p class="text-base text-gray-500">Abre un turno para poder cerrarlo después.</p>
+          </div>
+        </div>
+        <a
+          routerLink="/cash-register/open"
+          class="mt-5 inline-block rounded-lg bg-blue-600 px-4 py-2.5 text-base font-semibold text-white transition-colors hover:bg-blue-700"
+        >
+          Abrir turno
+        </a>
+      </div>
+    } @else {
+      <!-- Turno abierto: corte en vivo + formulario de cierre -->
+      <div class="flex flex-col gap-4 lg:flex-row">
+        <!-- Corte en vivo -->
+        <div class="flex-1">
+          @if (summary(); as summary) {
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h2 class="text-xl font-bold text-gray-900">Corte del turno #{{ summary.id }}</h2>
+              <div class="mt-3 grid grid-cols-2 gap-y-2 text-base">
+                <div>
+                  <p class="text-sm text-gray-500">Cajero</p>
+                  <p class="font-medium text-gray-900">{{ summary.cashier }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Fondo inicial</p>
+                  <p class="font-medium text-gray-900">{{ summary.openingFund | currency: 'MXN' : 'symbol-narrow' }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Apertura</p>
+                  <p class="font-medium text-gray-900">{{ summary.openedAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Tickets</p>
+                  <p class="font-medium text-gray-900">{{ summary.ticketCount }}</p>
+                </div>
+              </div>
+
+              <div class="mt-4 overflow-hidden rounded-xl border border-gray-100">
+                <table class="w-full text-left text-base">
+                  <thead>
+                    <tr class="border-b border-gray-100 bg-gray-50 text-sm text-gray-500">
+                      <th class="px-3 py-2 font-medium">Método de pago</th>
+                      <th class="px-3 py-2 text-right font-medium">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-50">
+                    @for (row of summary.salesByPaymentMethod; track row.method) {
+                      <tr>
+                        <td class="px-3 py-2 text-gray-600">{{ paymentLabels[row.method] }}</td>
+                        <td class="px-3 py-2 text-right font-medium text-gray-900">
+                          {{ row.total | currency: 'MXN' : 'symbol-narrow' }}
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="2" class="px-3 py-4 text-center text-gray-400">Sin ventas en el turno.</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="mt-4 space-y-1.5 text-base">
+                <div class="flex justify-between text-gray-600">
+                  <span>Ventas netas</span>
+                  <span>{{ summary.netSales | currency: 'MXN' : 'symbol-narrow' }}</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                  <span>Depósitos</span>
+                  <span>{{ summary.deposits | currency: 'MXN' : 'symbol-narrow' }}</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                  <span>Retiros</span>
+                  <span>-{{ summary.withdrawals | currency: 'MXN' : 'symbol-narrow' }}</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                  <span>Gastos</span>
+                  <span>-{{ summary.expenses | currency: 'MXN' : 'symbol-narrow' }}</span>
+                </div>
+                <div class="flex justify-between border-t border-gray-100 pt-1.5 text-lg font-bold text-gray-900">
+                  <span>Efectivo esperado</span>
+                  <span>{{ summary.expectedCash | currency: 'MXN' : 'symbol-narrow' }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Formulario de cierre -->
+        <form
+          class="flex w-full flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm lg:w-[380px] lg:shrink-0"
+          [formGroup]="form"
+          (ngSubmit)="submit()"
+        >
+          @if (apiError(); as error) {
+            <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-base text-red-700">
+              <p class="font-medium">{{ error.message }}</p>
+              @if (error.details.length) {
+                <ul class="mt-1 list-inside list-disc text-sm">
+                  @for (detail of error.details; track detail) {
+                    <li>{{ detail }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+
+          <div class="flex flex-col gap-1">
+            <label class="text-base font-medium text-gray-700">Efectivo contado <span class="text-red-500">*</span></label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="declaredAmount"
+              placeholder="0.00"
+              class="w-full rounded-lg border border-gray-200 px-3 py-2 text-base text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+              [class.border-red-400]="invalid('declaredAmount')"
+            />
+            @if (invalid('declaredAmount')) {
+              <p class="text-sm text-red-600">Ingrese el efectivo contado (mayor o igual a 0, máximo 2 decimales).</p>
+            }
+          </div>
+
+          @if (liveDifference(); as diff) {
+            <div
+              class="flex justify-between rounded-lg px-3 py-2 text-base font-medium"
+              [class]="diff === 0 ? 'bg-gray-50 text-gray-700' : 'bg-red-50 text-red-700'"
+            >
+              <span>Diferencia</span>
+              <span>{{ diff | currency: 'MXN' : 'symbol-narrow' }}</span>
+            </div>
+          }
+
+          <div class="flex flex-col gap-1">
+            <label class="text-base font-medium text-gray-700">Observaciones</label>
+            <textarea
+              rows="3"
+              formControlName="notes"
+              placeholder="Notas de cierre (opcional)..."
+              class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-base text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+            ></textarea>
+            @if (invalid('notes')) {
+              <p class="text-sm text-red-600">Las observaciones no pueden exceder 500 caracteres.</p>
+            }
+          </div>
+
+          <div class="flex items-center gap-2 border-t border-gray-100 pt-4">
+            <button
+              type="submit"
+              [disabled]="saving()"
+              class="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-4 py-2.5 text-base font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{ saving() ? 'Cerrando...' : 'Cerrar turno' }}
+            </button>
+            <a
+              routerLink="/cash-register/cierres"
+              class="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-center text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+            >
+              Cancelar
+            </a>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+</div>

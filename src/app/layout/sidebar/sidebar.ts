@@ -30,9 +30,12 @@ export class Sidebar {
 
   protected readonly cashRegister = CASH_REGISTER;
 
-  // Grupos expandidos del menú. Se abre "Ventas" si la ruta actual es de ventas.
+  // Grupos expandidos del menú. Se abre el grupo cuya ruta coincide con la actual.
   protected readonly expanded = signal<Set<string>>(
-    new Set(this.router.url.startsWith('/sales') ? ['Ventas'] : []),
+    new Set([
+      ...(this.router.url.startsWith('/sales') ? ['Ventas'] : []),
+      ...(this.router.url.startsWith('/cash-register') ? ['Caja'] : []),
+    ]),
   );
 
   // Clic en el grupo (p. ej. Ventas): navega a la primera subopción (Nueva venta)
@@ -118,6 +121,28 @@ export class Sidebar {
       label: 'Usuarios',
       route: '/users',
       icon: 'M15 19.13v-1.5a4.13 4.13 0 0 0-4.12-4.13H5.63A4.13 4.13 0 0 0 1.5 17.63v1.5M18 8.25v6m3-3h-6m-4.5-3.38a3.38 3.38 0 1 1-6.75 0 3.38 3.38 0 0 1 6.75 0Z',
+    },
+    {
+      label: 'Caja',
+      route: null,
+      icon: 'M5.25 10.5h13.5l1.5 7.5a1.1 1.1 0 0 1-1.08 1.32H4.83a1.1 1.1 0 0 1-1.08-1.32l1.5-7.5Zm3-3.75h7.5m-7.5 0V4.88c0-.62.5-1.13 1.13-1.13h5.24c.62 0 1.13.5 1.13 1.13v1.87m-7.5 0v3.75m7.5-3.75v3.75M8.25 14.25h.01m3.74 0h.01m3.74 0h.01',
+      children: [
+        {
+          label: 'Abrir turno',
+          route: '/cash-register/open',
+          icon: 'M12 4.5v15m7.5-7.5h-15',
+        },
+        {
+          label: 'Cerrar turno',
+          route: '/cash-register/close',
+          icon: 'M5.25 9V5.25A2.25 2.25 0 0 1 7.5 3h9a2.25 2.25 0 0 1 2.25 2.25V9m-13.5 0h13.5m-13.5 0a1.5 1.5 0 0 0-1.5 1.5v8.25A2.25 2.25 0 0 0 4.5 21h15a2.25 2.25 0 0 0 1.5-2.25V10.5a1.5 1.5 0 0 0-1.5-1.5',
+        },
+        {
+          label: 'Cierres',
+          route: '/cash-register/cierres',
+          icon: 'M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z',
+        },
+      ],
     },
     {
       label: 'Reportes',
