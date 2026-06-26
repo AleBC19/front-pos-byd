@@ -1,0 +1,159 @@
+<div class="flex h-full flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
+  @if (loading()) {
+    <div class="flex flex-1 items-center justify-center py-16 text-gray-400">Cargando corte...</div>
+  } @else if (!summary()) {
+    <div class="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-16 text-center text-gray-400">
+      <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5.25 10.5h13.5l1.5 7.5a1.1 1.1 0 0 1-1.08 1.32H4.83a1.1 1.1 0 0 1-1.08-1.32l1.5-7.5Zm3-3.75h7.5m-7.5 0V4.88c0-.62.5-1.13 1.13-1.13h5.24c.62 0 1.13.5 1.13 1.13v1.87m-7.5 0v3.75m7.5-3.75v3.75" />
+      </svg>
+      <p class="text-sm">Selecciona un turno para ver el corte.</p>
+    </div>
+  } @else if (summary(); as summary) {
+    <!-- Encabezado -->
+    <div class="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
+      <h2 class="text-xl font-bold text-gray-900">Corte de turno #{{ summary.id }}</h2>
+      <span
+        class="inline-block rounded-full px-2.5 py-0.5 text-sm font-medium"
+        [class]="summary.isClosed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'"
+      >
+        {{ summary.isClosed ? 'Cerrado' : 'Abierto' }}
+      </span>
+    </div>
+
+    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+      @if (error(); as message) {
+        <div class="mb-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-base text-red-700">
+          {{ message }}
+        </div>
+      }
+
+      <!-- Datos del turno -->
+      <div class="grid grid-cols-2 gap-y-2 text-base">
+        <div>
+          <p class="text-sm text-gray-500">Cajero</p>
+          <p class="font-medium text-gray-900">{{ summary.cashier }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Fondo inicial</p>
+          <p class="font-medium text-gray-900">{{ summary.openingFund | currency: 'MXN' : 'symbol-narrow' }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Apertura</p>
+          <p class="font-medium text-gray-900">{{ summary.openedAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Cierre</p>
+          <p class="font-medium text-gray-900">
+            {{ summary.closedAt ? (summary.closedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Ventas por método de pago -->
+      <div class="mt-4 overflow-hidden rounded-xl border border-gray-100">
+        <table class="w-full text-left text-base">
+          <thead>
+            <tr class="border-b border-gray-100 bg-gray-50 text-sm text-gray-500">
+              <th class="px-3 py-2 font-medium">Método de pago</th>
+              <th class="px-3 py-2 text-right font-medium">Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            @for (row of summary.salesByPaymentMethod; track row.method) {
+              <tr>
+                <td class="px-3 py-2 text-gray-600">{{ paymentLabels[row.method] }}</td>
+                <td class="px-3 py-2 text-right font-medium text-gray-900">
+                  {{ row.total | currency: 'MXN' : 'symbol-narrow' }}
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="2" class="px-3 py-4 text-center text-gray-400">Sin ventas en el turno.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Resumen de ventas -->
+      <div class="mt-4 space-y-1.5">
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Tickets</span>
+          <span>{{ summary.ticketCount }}</span>
+        </div>
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Descuentos</span>
+          <span>{{ summary.totalDiscounts | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Total ventas</span>
+          <span>{{ summary.totalSales | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Devoluciones ({{ summary.returnsCount }})</span>
+          <span>-{{ summary.totalReturns | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        <div class="flex justify-between border-t border-gray-100 pt-1.5 text-lg font-bold text-gray-900">
+          <span>Ventas netas</span>
+          <span>{{ summary.netSales | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+      </div>
+
+      <!-- Movimientos de caja -->
+      <div class="mt-4 space-y-1.5">
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Depósitos</span>
+          <span>{{ summary.deposits | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Retiros</span>
+          <span>-{{ summary.withdrawals | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Gastos</span>
+          <span>-{{ summary.expenses | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+      </div>
+
+      <!-- Arqueo de efectivo -->
+      <div class="mt-4 space-y-1.5 rounded-xl bg-gray-50 px-3 py-3">
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Efectivo esperado</span>
+          <span>{{ summary.expectedCash | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        <div class="flex justify-between text-base text-gray-600">
+          <span>Efectivo contado</span>
+          <span>{{ summary.declaredAmount | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+        <div
+          class="flex justify-between border-t border-gray-200 pt-1.5 text-lg font-bold"
+          [class]="summary.difference === 0 ? 'text-gray-900' : 'text-red-600'"
+        >
+          <span>Diferencia</span>
+          <span>{{ summary.difference | currency: 'MXN' : 'symbol-narrow' }}</span>
+        </div>
+      </div>
+
+      @if (summary.closingNotes) {
+        <div class="mt-4">
+          <p class="text-sm text-gray-500">Observaciones de cierre</p>
+          <p class="text-base text-gray-900">{{ summary.closingNotes }}</p>
+        </div>
+      }
+    </div>
+
+    <!-- Acciones -->
+    <div class="shrink-0 border-t border-gray-100 px-5 py-4">
+      <button
+        type="button"
+        (click)="print()"
+        class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-base font-semibold text-white transition-colors hover:bg-blue-700"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6.75 7.5V3.75h10.5V7.5m0 9.75h2.25a1.5 1.5 0 0 0 1.5-1.5v-5.25a1.5 1.5 0 0 0-1.5-1.5H4.5a1.5 1.5 0 0 0-1.5 1.5v5.25a1.5 1.5 0 0 0 1.5 1.5h2.25m0-3.75h10.5v6.75H6.75V13.5Z" />
+        </svg>
+        Imprimir corte
+      </button>
+    </div>
+  }
+</div>
