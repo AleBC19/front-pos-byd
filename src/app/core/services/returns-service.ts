@@ -1,8 +1,15 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CreateReturnRequest, ReturnDto } from '../models/return';
+import { PagedResponse } from '../models/api';
+import {
+  CreateReturnRequest,
+  GetReturnsRequest,
+  ReturnDto,
+  ReturnListItemDto,
+} from '../models/return';
+import { buildParams } from './products-service';
 
 // Operaciones de devoluciones contra /api/returns. Servicio sin estado:
 // los componentes guardan los resultados en sus propias signals.
@@ -21,10 +28,10 @@ export class ReturnsService {
     return this.http.get<ReturnDto>(`${this.baseUrl}/${id}`);
   }
 
-  // Devoluciones asociadas a una venta (el backend filtra por saleId).
-  listBySale(saleId: number): Observable<ReturnDto[]> {
-    return this.http.get<ReturnDto[]>(this.baseUrl, {
-      params: new HttpParams().set('saleId', saleId),
+  // Listado global de devoluciones con filtros (rango de fechas, venta, usuario) y paginación.
+  getReturns(query: GetReturnsRequest = {}): Observable<PagedResponse<ReturnListItemDto>> {
+    return this.http.get<PagedResponse<ReturnListItemDto>>(this.baseUrl, {
+      params: buildParams(query),
     });
   }
 }
