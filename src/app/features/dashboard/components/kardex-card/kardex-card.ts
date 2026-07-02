@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { KARDEX_MOVEMENTS } from '../../data/dashboard-mock';
+import { Component, input } from '@angular/core';
+import { KardexMovement } from '../../data/dashboard.view-models';
 
 // Tabla de movimientos recientes de inventario (kardex).
 @Component({
@@ -7,5 +7,5 @@ import { KARDEX_MOVEMENTS } from '../../data/dashboard-mock';
   templateUrl: './kardex-card.html',
 })
 export class KardexCard {
-  protected readonly movements = KARDEX_MOVEMENTS;
+  readonly movements = input.required<KardexMovement[]>();
 }

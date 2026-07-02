@@ -1,12 +1,14 @@
 import {
   afterNextRender,
   Component,
+  effect,
   ElementRef,
+  input,
   OnDestroy,
   viewChild,
 } from '@angular/core';
 import { Chart, registerables } from 'chart.js';
-import { SALES_BY_DAY } from '../../data/dashboard-mock';
+import { SalesByDay } from '../../data/dashboard.view-models';
 
 Chart.register(...registerables);
 
@@ -16,28 +18,42 @@ Chart.register(...registerables);
   templateUrl: './sales-by-day-chart.html',
 })
 export class SalesByDayChart implements OnDestroy {
-  protected readonly data = SALES_BY_DAY;
+  readonly data = input.required<SalesByDay>();
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('chartCanvas');
   private chart?: Chart;
+  private viewReady = false;
 
   constructor() {
-    afterNextRender(() => this.createChart());
+    afterNextRender(() => {
+      this.viewReady = true;
+      this.renderChart();
+    });
+    // Reconstruye la gráfica cuando cambian los datos (p. ej. al cambiar el período).
+    effect(() => {
+      this.data();
+      this.renderChart();
+    });
   }
 
   ngOnDestroy(): void {
     this.chart?.destroy();
   }
 
-  private createChart(): void {
+  private renderChart(): void {
+    if (!this.viewReady) {
+      return;
+    }
+    const data = this.data();
+    this.chart?.destroy();
     this.chart = new Chart(this.canvas().nativeElement, {
       data: {
-        labels: this.data.labels,
+        labels: data.labels,
         datasets: [
           {
             type: 'line',
             label: 'Tickets',
-            data: this.data.tickets,
+            data: data.tickets,
             yAxisID: 'yTickets',
             borderColor: '#1e40af',
             backgroundColor: '#1e40af',
@@ -49,7 +65,7 @@ export class SalesByDayChart implements OnDestroy {
           {
             type: 'bar',
             label: 'Ventas ($)',
-            data: this.data.sales,
+            data: data.sales,
             yAxisID: 'ySales',
             backgroundColor: '#3b82f6',
             borderRadius: 4,
@@ -66,9 +82,7 @@ export class SalesByDayChart implements OnDestroy {
           ySales: {
             position: 'left',
             min: 0,
-            max: 25000,
             ticks: {
-              stepSize: 5000,
               callback: (value) => '$' + Number(value).toLocaleString('en-US'),
               color: '#6b7280',
               font: { size: 12 },
@@ -79,8 +93,7 @@ export class SalesByDayChart implements OnDestroy {
           yTickets: {
             position: 'right',
             min: 0,
-            max: 150,
-            ticks: { stepSize: 30, color: '#6b7280', font: { size: 12 } },
+            ticks: { color: '#6b7280', font: { size: 12 } },
             grid: { display: false },
             border: { display: false },
           },
