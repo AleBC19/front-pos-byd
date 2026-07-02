@@ -1,7 +1,7 @@
 <div class="flex min-h-0 flex-1 flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
   <!-- Encabezado -->
   <div class="shrink-0 border-b border-gray-100 px-4 py-3">
-    <h2 class="text-lg font-bold text-gray-900">Ticket actual</h2>
+    <h2 class="text-xl font-bold text-gray-900">Ticket actual</h2>
   </div>
 
   <!-- Cliente -->
@@ -32,9 +32,9 @@
         <p class="text-sm">Agrega productos para iniciar la venta.</p>
       </div>
     } @else {
-      <table class="w-full text-left text-sm">
+      <table class="w-full text-left text-base">
         <thead class="sticky top-0 bg-white">
-          <tr class="border-b border-gray-100 text-xs text-gray-500">
+          <tr class="border-b border-gray-100 text-sm text-gray-500">
             <th class="py-2 font-medium">Producto</th>
             <th class="py-2 text-center font-medium">Cant</th>
             <th class="py-2 text-right font-medium">P. Unit</th>
@@ -47,7 +47,7 @@
             <tr>
               <td class="py-2 pr-2">
                 <p class="font-medium text-gray-900">{{ item.name }}</p>
-                <p class="text-xs text-gray-400">{{ item.code }}</p>
+                <p class="text-sm text-gray-400">{{ item.code }}</p>
               </td>
               <td class="py-2">
                 <div class="flex items-center justify-center gap-1">
@@ -68,7 +68,16 @@
                       <path d="M5 12h14" />
                     </svg>
                   </button>
-                  <span class="w-6 text-center font-medium text-gray-900">{{ item.quantity }}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    [max]="item.stock"
+                    [value]="item.quantity"
+                    (change)="onQuantityInput(item, $any($event.target))"
+                    (focus)="$any($event.target).select()"
+                    aria-label="Cantidad"
+                    class="w-12 rounded-md border border-gray-200 py-1 text-center font-medium text-gray-900 focus:border-blue-500 focus:outline-none"
+                  />
                   <button
                     type="button"
                     (click)="increment.emit(item.productId)"
@@ -128,15 +137,15 @@
   <!-- Totales y acciones -->
   <div class="shrink-0 border-t border-gray-100 px-4 py-3">
     <div class="space-y-1.5">
-      <div class="flex justify-between text-sm text-gray-600">
+      <div class="flex justify-between text-base text-gray-600">
         <span>Subtotal</span>
         <span>{{ subtotal() | currency: 'MXN' : 'symbol-narrow' }}</span>
       </div>
-      <div class="flex justify-between text-sm text-gray-600">
+      <div class="flex justify-between text-base text-gray-600">
         <span>IVA (16%)</span>
         <span>{{ taxes() | currency: 'MXN' : 'symbol-narrow' }}</span>
       </div>
-      <div class="flex justify-between border-t border-gray-100 pt-1.5 text-lg font-bold text-gray-900">
+      <div class="flex justify-between border-t border-gray-100 pt-1.5 text-xl font-bold text-gray-900">
         <span>TOTAL</span>
         <span>{{ total() | currency: 'MXN' : 'symbol-narrow' }}</span>
       </div>

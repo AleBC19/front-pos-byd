@@ -32,7 +32,7 @@
     />
 
     <app-sale-ticket
-      class="flex min-h-0 w-[380px] shrink-0 flex-col"
+      class="flex min-h-0 w-2/5 min-w-[420px] shrink-0 flex-col"
       [items]="items()"
       [customer]="customer()"
       [subtotal]="subtotal()"
@@ -41,6 +41,7 @@
       [canCheckout]="canCheckout()"
       (increment)="increment($event)"
       (decrement)="decrement($event)"
+      (setQuantity)="setQuantity($event)"
       (remove)="remove($event)"
       (checkout)="checkout()"
       (hold)="hold()"

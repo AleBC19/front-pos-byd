@@ -21,9 +21,22 @@ export class SaleTicket {
 
   readonly increment = output<number>();
   readonly decrement = output<number>();
+  readonly setQuantity = output<{ productId: number; quantity: number }>();
   readonly remove = output<number>();
   readonly checkout = output<void>();
   readonly hold = output<void>();
   readonly clearSale = output<void>();
   readonly changeCustomer = output<CustomerDto | null>();
+
+  // Sanea la cantidad tecleada: entero, acotada a [1, stock]. Reescribe el valor del
+  // input porque el binding es unidireccional: si tras el clamp la cantidad no cambia,
+  // el DOM se quedaría mostrando lo que tecleó el usuario (p. ej. 99 con tope 5).
+  protected onQuantityInput(item: CartItem, inputEl: HTMLInputElement): void {
+    const parsed = Math.floor(Number(inputEl.value));
+    const quantity = Number.isFinite(parsed)
+      ? Math.min(Math.max(parsed, 1), item.stock)
+      : item.quantity;
+    inputEl.value = String(quantity);
+    this.setQuantity.emit({ productId: item.productId, quantity });
+  }
 }

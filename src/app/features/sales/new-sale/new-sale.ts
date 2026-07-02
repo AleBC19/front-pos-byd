@@ -3,6 +3,7 @@ import { extractApiError } from '../../../core/models/api';
 import { CustomerDto } from '../../../core/models/customer';
 import { ProductDto } from '../../../core/models/product';
 import { SaleDto, SaleStatus } from '../../../core/models/sale';
+import { CashRegisterService } from '../../../core/services/cash-register-service';
 import { SalesService } from '../../../core/services/sales-service';
 import { CartItem, computeTotals } from '../cart-item';
 import { HeldSalesPanel } from '../held-sales/held-sales-panel';
@@ -21,6 +22,7 @@ import { SaleTicket } from '../sale-ticket/sale-ticket';
 })
 export class NewSale {
   private readonly salesService = inject(SalesService);
+  private readonly cashRegister = inject(CashRegisterService);
 
   protected readonly items = signal<CartItem[]>([]);
   protected readonly customer = signal<CustomerDto | null>(null);
@@ -87,6 +89,17 @@ export class NewSale {
       items.map((item) =>
         item.productId === productId && item.quantity < item.stock
           ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      ),
+    );
+  }
+
+  // Fija la cantidad tecleada por el usuario (clamp defensivo a [1, stock]).
+  protected setQuantity({ productId, quantity }: { productId: number; quantity: number }): void {
+    this.items.update((items) =>
+      items.map((item) =>
+        item.productId === productId
+          ? { ...item, quantity: Math.min(Math.max(Math.floor(quantity), 1), item.stock) }
           : item,
       ),
     );
@@ -190,6 +203,8 @@ export class NewSale {
     this.resumeSaleId.set(null);
     this.resumeLines.set([]);
     this.refreshHeldCount();
+    // Actualiza el corte del turno para reflejar la venta en el sidebar (no-op sin turno).
+    this.cashRegister.refreshCurrentSummary();
   }
 
   // Una venta en espera fue descartada desde el panel: solo actualiza el contador
