@@ -143,49 +143,83 @@
         <p class="text-base font-semibold text-gray-900">Cierre de caja</p>
       </div>
 
-      <div class="mt-3">
-        <p class="text-sm text-gray-500">Caja activa</p>
-        <p class="text-base font-semibold text-blue-600">{{ cashRegister.name }}</p>
-        <p class="mt-0.5 text-sm text-gray-500">
-          Apertura: {{ cashRegister.openedAt }}<br />
-          por {{ cashRegister.openedBy }}
-        </p>
-      </div>
-
-      <hr class="my-3 border-gray-100" />
-
-      <div class="space-y-2.5">
-        <div>
-          <p class="text-sm text-gray-500">Efectivo esperado</p>
-          <p class="text-xl font-bold text-green-600">{{ cashRegister.expectedCash }}</p>
+      @if (session(); as session) {
+        <div class="mt-3">
+          <p class="text-sm text-gray-500">Caja activa</p>
+          <p class="text-base font-semibold text-blue-600">Turno #{{ session.id }}</p>
+          @if (summary(); as summary) {
+            <p class="mt-0.5 text-sm text-gray-500">
+              Apertura: {{ summary.openedAt | date: 'hh:mm a' }}<br />
+              por {{ summary.cashier }}
+            </p>
+          }
         </div>
-        <div>
-          <p class="text-sm text-gray-500">Efectivo contado</p>
-          <p class="text-xl font-bold text-gray-900">{{ cashRegister.countedCash }}</p>
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">Diferencia</p>
-          <p class="text-xl font-bold text-red-600">{{ cashRegister.difference }}</p>
-        </div>
-      </div>
 
-      <a
-        routerLink="/cash-register/cierres"
-        class="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-blue-600 px-3 py-2 text-base font-medium text-blue-600 transition-colors hover:bg-blue-50"
-      >
-        Ir a Cierre de caja
-        <svg
-          class="h-4 w-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+        <hr class="my-3 border-gray-100" />
+
+        @if (summary(); as summary) {
+          <div class="space-y-2.5">
+            <div>
+              <p class="text-sm text-gray-500">Efectivo esperado</p>
+              <p class="text-xl font-bold text-green-600">
+                {{ summary.expectedCash | currency: 'MXN' : 'symbol-narrow' }}
+              </p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">Ventas del turno</p>
+              <p class="text-xl font-bold text-gray-900">
+                {{ summary.totalSales | currency: 'MXN' : 'symbol-narrow' }}
+              </p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">Tickets</p>
+              <p class="text-xl font-bold text-gray-900">{{ summary.ticketCount }}</p>
+            </div>
+          </div>
+        } @else {
+          <p class="text-sm text-gray-500">Cargando corte…</p>
+        }
+
+        <a
+          routerLink="/cash-register/cierres"
+          class="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-blue-600 px-3 py-2 text-base font-medium text-blue-600 transition-colors hover:bg-blue-50"
         >
-          <path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" />
-        </svg>
-      </a>
+          Ir a Cierre de caja
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+      } @else {
+        <div class="mt-3">
+          <p class="text-sm text-gray-500">No hay ningún turno de caja abierto.</p>
+        </div>
+
+        <a
+          routerLink="/cash-register/open"
+          class="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-base font-medium text-white transition-colors hover:bg-blue-700"
+        >
+          Abrir turno
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+      }
     </div>
   </div>
 
@@ -193,7 +227,7 @@
   <div class="mt-auto border-t border-gray-200 px-3 py-3">
     <button
       type="button"
-      (click)="logout()"
+      (click)="confirmLogout.set(true)"
       class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-base text-gray-600 transition-colors hover:bg-gray-50"
     >
       <svg
@@ -213,3 +247,11 @@
     </button>
   </div>
 </aside>
+
+<app-confirm-dialog
+  [(open)]="confirmLogout"
+  title="Cerrar sesión"
+  message="¿Seguro que quieres cerrar sesión?"
+  confirmLabel="Cerrar sesión"
+  (confirmed)="logout()"
+/>

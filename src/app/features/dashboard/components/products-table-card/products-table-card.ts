@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
-import { PRODUCT_ROWS, ProductRow } from '../../data/dashboard-mock';
+import { Component, input, signal } from '@angular/core';
+import { ProductRow } from '../../data/dashboard.view-models';
 
 const STATUS_CLASSES: Record<ProductRow['status'], string> = {
   'En stock': 'bg-green-100 text-green-700',
@@ -7,14 +7,13 @@ const STATUS_CLASSES: Record<ProductRow['status'], string> = {
   Crítico: 'bg-red-100 text-red-700',
 };
 
-// Tarjeta de productos: tabs, filtros, tabla y paginación (datos dummy,
-// sin lógica de filtrado/paginación todavía).
+// Tarjeta de productos bajo mínimo: tabs, filtros y tabla.
 @Component({
   selector: 'app-products-table-card',
   templateUrl: './products-table-card.html',
 })
 export class ProductsTableCard {
-  protected readonly products = PRODUCT_ROWS;
+  readonly products = input.required<ProductRow[]>();
   protected readonly activeTab = signal<'productos' | 'categorias'>('productos');
 
   protected statusClass(status: ProductRow['status']): string {

@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { INVENTORY_SUMMARY } from '../../data/dashboard-mock';
+import { Component, input } from '@angular/core';
+import { InventorySummaryView } from '../../data/dashboard.view-models';
 
 // Resumen de inventario: valor total, bajo stock y agotados.
 @Component({
@@ -7,5 +7,5 @@ import { INVENTORY_SUMMARY } from '../../data/dashboard-mock';
   templateUrl: './inventory-summary.html',
 })
 export class InventorySummary {
-  protected readonly summary = INVENTORY_SUMMARY;
+  readonly summary = input.required<InventorySummaryView>();
 }

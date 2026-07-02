@@ -18,7 +18,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-50">
-        @for (movement of movements; track movement.date) {
+        @for (movement of movements(); track $index) {
           <tr class="hover:bg-gray-50">
             <td class="px-4 py-2 whitespace-nowrap text-gray-600">{{ movement.date }}</td>
             <td class="max-w-[150px] truncate px-3 py-2 whitespace-nowrap text-gray-900">

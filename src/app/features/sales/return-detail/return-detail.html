@@ -1,0 +1,75 @@
+<div class="flex h-full flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
+  @if (loading()) {
+    <div class="flex flex-1 items-center justify-center py-16 text-gray-400">
+      Cargando detalle...
+    </div>
+  } @else if (error(); as message) {
+    <div class="flex flex-1 items-center justify-center px-6 py-16 text-center text-base text-red-700">
+      {{ message }}
+    </div>
+  } @else if (!return_()) {
+    <div class="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-16 text-center text-gray-400">
+      <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-1" />
+      </svg>
+      <p class="text-sm">Selecciona una devolución para ver el detalle.</p>
+    </div>
+  } @else if (return_(); as ret) {
+    <!-- Encabezado -->
+    <div class="flex shrink-0 items-start justify-between border-b border-gray-100 px-5 py-4">
+      <div>
+        <h2 class="text-xl font-bold text-gray-900">Devolución #{{ ret.id }}</h2>
+        <p class="text-sm text-gray-500">
+          <span class="font-medium text-gray-700">{{ ret.saleFolio }}</span>
+          · {{ ret.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+        </p>
+      </div>
+      <div class="text-right">
+        <p class="text-sm text-gray-500">Total devuelto</p>
+        <p class="text-xl font-bold text-gray-900">
+          {{ ret.total | currency: 'MXN' : 'symbol-narrow' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+      <!-- Motivo y notas -->
+      <div class="space-y-1 text-base">
+        <p class="text-gray-700">
+          <span class="text-gray-500">Motivo:</span> {{ ret.reason }}
+        </p>
+        @if (ret.notes) {
+          <p class="text-gray-700"><span class="text-gray-500">Notas:</span> {{ ret.notes }}</p>
+        }
+      </div>
+
+      <!-- Renglones devueltos -->
+      <div class="mt-4 overflow-hidden rounded-xl border border-gray-100">
+        <table class="w-full text-left text-base">
+          <thead>
+            <tr class="border-b border-gray-100 bg-gray-50 text-sm text-gray-500">
+              <th class="px-3 py-2 font-medium">Producto</th>
+              <th class="px-3 py-2 text-center font-medium">Cant.</th>
+              <th class="px-3 py-2 text-right font-medium">P. unit.</th>
+              <th class="px-3 py-2 text-right font-medium">Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            @for (line of ret.details; track line.productId) {
+              <tr>
+                <td class="px-3 py-2 font-medium text-gray-900">{{ line.product }}</td>
+                <td class="px-3 py-2 text-center text-gray-600">{{ line.quantity }}</td>
+                <td class="px-3 py-2 text-right text-gray-600">
+                  {{ line.unitPrice | currency: 'MXN' : 'symbol-narrow' }}
+                </td>
+                <td class="px-3 py-2 text-right font-medium text-gray-900">
+                  {{ line.lineTotal | currency: 'MXN' : 'symbol-narrow' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

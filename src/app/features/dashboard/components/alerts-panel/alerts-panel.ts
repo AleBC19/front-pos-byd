@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { STOCK_ALERTS, TOTAL_ALERTS } from '../../data/dashboard-mock';
+import { Component, input } from '@angular/core';
+import { StockAlert } from '../../data/dashboard.view-models';
 
 // Panel de alertas de stock bajo/crítico con acción de reabastecer.
 @Component({
@@ -7,6 +7,6 @@ import { STOCK_ALERTS, TOTAL_ALERTS } from '../../data/dashboard-mock';
   templateUrl: './alerts-panel.html',
 })
 export class AlertsPanel {
-  protected readonly alerts = STOCK_ALERTS;
-  protected readonly totalAlerts = TOTAL_ALERTS;
+  readonly alerts = input.required<StockAlert[]>();
+  readonly totalAlerts = input.required<number>();
 }

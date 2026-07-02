@@ -19,8 +19,8 @@
         </svg>
       </span>
       <p class="mt-2 text-sm text-gray-600">Valor inventario</p>
-      <p class="text-base font-bold text-gray-900">{{ summary.value }}</p>
-      <p class="mt-0.5 text-xs text-gray-500">{{ summary.valueUpdatedAt }}</p>
+      <p class="text-base font-bold text-gray-900">{{ summary().value }}</p>
+      <p class="mt-0.5 text-xs text-gray-500">{{ summary().valueUpdatedAt }}</p>
     </div>
 
     <div class="rounded-lg border border-orange-100 bg-orange-50 p-3">
@@ -40,7 +40,7 @@
         </svg>
       </span>
       <p class="mt-2 text-sm text-gray-600">Productos bajo stock</p>
-      <p class="text-base font-bold text-gray-900">{{ summary.lowStock }}</p>
+      <p class="text-base font-bold text-gray-900">{{ summary().lowStock }}</p>
       <p class="mt-0.5 text-xs text-gray-500">Requieren atención</p>
     </div>
 
@@ -59,7 +59,7 @@
         </svg>
       </span>
       <p class="mt-2 text-sm text-gray-600">Productos agotados</p>
-      <p class="text-base font-bold text-gray-900">{{ summary.outOfStock }}</p>
+      <p class="text-base font-bold text-gray-900">{{ summary().outOfStock }}</p>
       <p class="mt-0.5 text-xs text-gray-500">Sin existencias</p>
     </div>
   </div>

@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { KpiCard } from '../../data/dashboard-mock';
+import { KpiCard } from '../../data/dashboard.view-models';
 
 const ICON_PATHS: Record<KpiCard['icon'], string> = {
   currency:

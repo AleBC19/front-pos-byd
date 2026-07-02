@@ -1,13 +1,14 @@
 import {
   afterNextRender,
   Component,
+  effect,
   ElementRef,
   input,
   OnDestroy,
   viewChild,
 } from '@angular/core';
 import { Chart, registerables } from 'chart.js';
-import { BreakdownItem } from '../../data/dashboard-mock';
+import { BreakdownItem } from '../../data/dashboard.view-models';
 
 Chart.register(...registerables);
 
@@ -22,17 +23,30 @@ export class SalesDonutCard implements OnDestroy {
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('donutCanvas');
   private chart?: Chart<'doughnut'>;
+  private viewReady = false;
 
   constructor() {
-    afterNextRender(() => this.createChart());
+    afterNextRender(() => {
+      this.viewReady = true;
+      this.renderChart();
+    });
+    // Reconstruye la dona cuando cambian los datos (p. ej. al cambiar el período).
+    effect(() => {
+      this.items();
+      this.renderChart();
+    });
   }
 
   ngOnDestroy(): void {
     this.chart?.destroy();
   }
 
-  private createChart(): void {
+  private renderChart(): void {
+    if (!this.viewReady) {
+      return;
+    }
     const items = this.items();
+    this.chart?.destroy();
     this.chart = new Chart(this.canvas().nativeElement, {
       type: 'doughnut',
       data: {

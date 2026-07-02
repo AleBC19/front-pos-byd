@@ -30,7 +30,7 @@ export interface ReturnDetailDto {
   lineTotal: number;
 }
 
-// Devolución completa (POST /api/returns, GET /api/returns/{id}, GET /api/returns?saleId=).
+// Devolución completa (POST /api/returns, GET /api/returns/{id}).
 export interface ReturnDto {
   id: number;
   saleId: number;
@@ -42,3 +42,31 @@ export interface ReturnDto {
   createdAt: string;
   details: ReturnDetailDto[];
 }
+
+// Renglón del listado GET /api/returns (resumen; sin los renglones de la devolución).
+export interface ReturnListItemDto {
+  id: number;
+  saleId: number;
+  saleFolio: string;
+  userId: number;
+  cashier: string;
+  reason: string;
+  total: number;
+  createdAt: string;
+  itemCount: number;
+}
+
+// Filtros de GET /api/returns. sortBy: 'total' ordena por importe; cualquier otro, por fecha.
+export interface GetReturnsRequest {
+  from?: string; // yyyy-MM-dd (DateOnly)
+  to?: string; // yyyy-MM-dd (DateOnly, inclusivo)
+  saleId?: number;
+  userId?: number;
+  sortBy?: string;
+  desc?: boolean;
+  page?: number;
+  pageSize?: number;
+}
+
+// El backend usa 20 por defecto y rechaza tamaños > 200.
+export const RETURN_PAGE_SIZES = [20, 50, 60] as const;

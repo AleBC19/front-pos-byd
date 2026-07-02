@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PagedResponse } from '../models/api';
+import { BelowMinimumProductDto } from '../models/dashboard';
 import {
   CreateInventoryMovementRequest,
   InventoryItemDto,
@@ -38,6 +39,12 @@ export class InventoryService {
     return this.http.get<PagedResponse<InventoryMovementDto>>(`${this.baseUrl}/movements`, {
       params: buildParams(query),
     });
+  }
+
+  // Productos con stock por debajo (o igual) del mínimo, para alertas del dashboard.
+  // Devuelve la entidad cruda: precios en centavos y sin nombre de categoría.
+  getBelowMinimum(): Observable<BelowMinimumProductDto[]> {
+    return this.http.get<BelowMinimumProductDto[]>(`${this.baseUrl}/below-minimum`);
   }
 
   // Registra un movimiento manual (entrada, salida o ajuste).

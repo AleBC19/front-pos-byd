@@ -1,24 +1,33 @@
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MenuItem } from '../../core/models/menu';
 import { AuthService } from '../../core/services/auth-service';
-import { CASH_REGISTER } from '../../features/dashboard/data/dashboard-mock';
+import { CashRegisterService } from '../../core/services/cash-register-service';
+import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
 
 // Navegación lateral con tarjeta de cierre de caja. El menú llega de la API en el login
-// (ya filtrado por permisos) y se expone vía AuthService.menu().
+// (ya filtrado por permisos) y se expone vía AuthService.menu(). La tarjeta de caja usa
+// el estado compartido de CashRegisterService (la carga inicial la dispara el topbar).
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.html',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, CurrencyPipe, DatePipe, ConfirmDialog],
 })
 export class Sidebar {
   private readonly auth = inject(AuthService);
+  private readonly cashRegister = inject(CashRegisterService);
   private readonly router = inject(Router);
 
-  protected readonly cashRegister = CASH_REGISTER;
+  // Turno abierto actual y su corte en vivo (estado compartido del servicio de caja).
+  protected readonly session = this.cashRegister.currentSession;
+  protected readonly summary = this.cashRegister.currentSummary;
 
   // Menú entregado por la API (árbol de 2 niveles; icon ya es un path SVG).
   protected readonly navItems = this.auth.menu;
+
+  // Controla el diálogo de confirmación de cierre de sesión.
+  protected readonly confirmLogout = signal(false);
 
   // Grupos expandidos del menú. Se abre el grupo cuya ruta coincide con la actual.
   protected readonly expanded = signal<Set<string>>(
@@ -61,8 +70,10 @@ export class Sidebar {
   }
 
   // Cierra sesión contra el API; navega a /login aunque la petición falle
-  // (la sesión local ya quedó limpia por el servicio).
+  // (la sesión local ya quedó limpia por el servicio). Limpia también el estado
+  // de caja para que el siguiente usuario no vea el turno anterior.
   protected logout(): void {
+    this.cashRegister.reset();
     this.auth.logout().subscribe({
       complete: () => this.router.navigate(['/login']),
       error: () => this.router.navigate(['/login']),

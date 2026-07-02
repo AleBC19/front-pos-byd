@@ -4,12 +4,12 @@
     <span
       class="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-sm font-bold text-white"
     >
-      {{ totalAlerts }}
+      {{ totalAlerts() }}
     </span>
   </div>
 
   <ul class="flex-1 divide-y divide-gray-100 px-4">
-    @for (alert of alerts; track alert.code) {
+    @for (alert of alerts(); track alert.code) {
       <li class="flex items-center gap-2 py-2.5">
         <!-- Placeholder de imagen del producto -->
         <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-300">
