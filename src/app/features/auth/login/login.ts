@@ -28,6 +28,9 @@ interface PinTarget {
   selector: 'app-login',
   templateUrl: './login.html',
   imports: [ReactiveFormsModule],
+  host: {
+    '(document:keydown)': 'onKeydown($event)',
+  },
 })
 export class Login {
   private readonly auth = inject(AuthService);
@@ -146,6 +149,27 @@ export class Login {
     this.pinTarget.set(null);
     this.manualEntry.set(false);
     this.resetPin();
+  }
+
+  // Permite teclear el PIN con el teclado físico cuando el teclado en pantalla está visible.
+  protected onKeydown(event: KeyboardEvent): void {
+    if (this.activeTab() !== 'quick' || !this.pinTarget()) {
+      return;
+    }
+
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    if (event.key >= '0' && event.key <= '9') {
+      event.preventDefault();
+      this.pressDigit(event.key);
+    } else if (event.key === 'Backspace') {
+      event.preventDefault();
+      this.backspace();
+    } else if (event.key === 'Escape') {
+      this.backToUsers();
+    }
   }
 
   protected pressDigit(digit: string): void {
