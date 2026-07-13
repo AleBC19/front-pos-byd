@@ -1,0 +1,111 @@
+<article class="rounded-xl border border-gray-200 bg-white shadow-sm">
+  <header class="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
+    <svg
+      class="h-8 w-8 text-gray-700"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path
+        d="M3.75 21h16.5M5.25 21V4.5A1.5 1.5 0 0 1 6.75 3h7.5a1.5 1.5 0 0 1 1.5 1.5V21m0-12h1.5a1.5 1.5 0 0 1 1.5 1.5V21M8.25 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6h.01m-.01 3h.01m-.01 3h.01M9 21v-4.5h3V21"
+      />
+    </svg>
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900">Datos del negocio</h2>
+      <p class="text-sm text-gray-500">
+        Información fiscal y de contacto que identifica a tu negocio.
+      </p>
+    </div>
+  </header>
+
+  <form class="p-5" (submit)="$event.preventDefault(); save()">
+    <div class="grid max-w-4xl grid-cols-2 gap-x-5 gap-y-4">
+      <label class="block text-sm font-medium text-gray-700">
+        Nombre comercial
+        <input
+          type="text"
+          [value]="form().tradeName"
+          (input)="updateField('tradeName', $any($event.target).value)"
+          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </label>
+      <label class="block text-sm font-medium text-gray-700">
+        Razón social
+        <input
+          type="text"
+          [value]="form().legalName"
+          (input)="updateField('legalName', $any($event.target).value)"
+          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </label>
+      <label class="block text-sm font-medium text-gray-700">
+        RFC
+        <input
+          type="text"
+          [value]="form().rfc"
+          (input)="updateField('rfc', $any($event.target).value)"
+          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base uppercase text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </label>
+      <label class="block text-sm font-medium text-gray-700">
+        Teléfono
+        <input
+          type="tel"
+          [value]="form().phone"
+          (input)="updateField('phone', $any($event.target).value)"
+          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </label>
+      <label class="block text-sm font-medium text-gray-700">
+        Correo electrónico
+        <input
+          type="email"
+          [value]="form().email"
+          (input)="updateField('email', $any($event.target).value)"
+          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </label>
+      <label class="block text-sm font-medium text-gray-700">
+        Dirección fiscal
+        <input
+          type="text"
+          [value]="form().address"
+          (input)="updateField('address', $any($event.target).value)"
+          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </label>
+    </div>
+
+    <div class="mt-6 flex max-w-4xl items-center justify-between border-t border-gray-100 pt-5">
+      <div class="flex items-center gap-3">
+        <div
+          class="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-xs font-medium text-gray-400"
+        >
+          LOGO
+        </div>
+        <div>
+          <p class="text-sm font-medium text-gray-800">Logotipo del negocio</p>
+          <button type="button" class="mt-1 text-sm font-medium text-blue-600 hover:text-blue-700">
+            Seleccionar imagen
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        @if (saved()) {
+          <span role="status" class="text-sm font-medium text-green-600"
+            >Cambios guardados localmente</span
+          >
+        }
+        <button
+          type="submit"
+          class="rounded-lg bg-blue-600 px-5 py-2.5 text-base font-medium text-white transition-colors hover:bg-blue-700"
+        >
+          Guardar cambios
+        </button>
+      </div>
+    </div>
+  </form>
+</article>

@@ -50,6 +50,11 @@ export const routes: Routes = [
             (m) => m.CASH_REGISTER_ROUTES,
           ),
       },
+      {
+        path: 'settings',
+        loadChildren: () =>
+          import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },
