@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
-// TODO: layout de configuración con sub-navegación
 @Component({
   selector: 'app-settings-layout',
-  template: `<p>settings-layout</p>`,
+  templateUrl: './settings-layout.html',
+  imports: [RouterLink, RouterLinkActive, RouterOutlet],
 })
 export class SettingsLayout {}
