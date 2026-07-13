@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import {
   AbstractControl,
   NonNullableFormBuilder,
@@ -6,6 +6,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { Observable, of, switchMap } from 'rxjs';
 import { ApiError, extractApiError } from '../../../core/models/api';
 import { CategoryDto } from '../../../core/models/category';
 import { ProductDto, SaveProductRequest } from '../../../core/models/product';
@@ -20,8 +21,12 @@ function salePriceGteCost(group: AbstractControl): ValidationErrors | null {
   return sale && cost > sale ? { salePriceBelowCost: true } : null;
 }
 
+// Límites de imagen alineados al backend: JPG/PNG/WEBP, máx. 3 MB.
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 // Formulario de alta/edición de producto del panel lateral.
-// Unidad, IVA, imagen, stock inicial y estado siguen deshabilitados:
+// Unidad, IVA, stock inicial y estado siguen deshabilitados:
 // el API aún no los soporta (el stock se gestiona desde inventario).
 @Component({
   selector: 'app-product-form',
@@ -32,6 +37,7 @@ export class ProductForm {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly productsService = inject(ProductsService);
   private readonly categoriesService = inject(CategoriesService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Producto a editar; null = alta. El panel reutiliza la misma instancia,
   // por eso un effect repuebla o limpia el formulario cuando cambia.
@@ -51,6 +57,18 @@ export class ProductForm {
   protected readonly showCategoryForm = signal(false);
   protected readonly savingCategory = signal(false);
   protected readonly categoryError = signal<string | null>(null);
+
+  // Estado de la imagen. previewUrl puede ser la URL existente (/media/...)
+  // o un objectURL local de un archivo recién elegido.
+  protected readonly selectedFile = signal<File | null>(null);
+  protected readonly previewUrl = signal<string | null>(null);
+  protected readonly removeExisting = signal(false);
+  protected readonly imageError = signal<string | null>(null);
+  // objectURL local pendiente de revocar (evita fugas de memoria).
+  private objectUrl: string | null = null;
+  // Producto ya persistido en este intento: si la subida de imagen falla,
+  // un reintento no vuelve a crear (evita error de código duplicado).
+  private readonly savedProduct = signal<ProductDto | null>(null);
 
   protected readonly form = this.fb.group(
     {
@@ -77,6 +95,7 @@ export class ProductForm {
       const product = this.product();
       this.apiError.set(null);
       this.showCategoryForm.set(false);
+      this.resetImageState(product?.imageUrl ?? null);
 
       if (product) {
         this.form.reset({
@@ -92,6 +111,8 @@ export class ProductForm {
         this.form.reset();
       }
     });
+
+    this.destroyRef.onDestroy(() => this.revokeObjectUrl());
   }
 
   protected get isEdit(): boolean {
@@ -109,35 +130,138 @@ export class ProductForm {
       return;
     }
 
+    const current = this.product();
     const value = this.form.getRawValue();
     const body: SaveProductRequest = {
       code: value.code.trim(),
       name: value.name.trim(),
       description: value.description.trim() || undefined,
+      // Preserva la imagen actual en la edición (el PUT persiste imageUrl directo);
+      // en el alta arranca en null y la subida real ocurre en el paso 2.
+      imageUrl: current ? current.imageUrl : null,
       salePrice: Number(value.salePrice),
       purchasePrice: Number(value.purchasePrice),
       minimumStock: Number(value.minimumStock),
       categoryId: Number(value.categoryId),
     };
 
-    const current = this.product();
-    const request = current
-      ? this.productsService.updateProduct(current.id, body)
-      : this.productsService.createProduct(body);
+    // Alta ya creada en un intento previo cuya imagen falló: no recrear.
+    const persisted = this.savedProduct();
+    let save$: Observable<ProductDto>;
+    if (current) {
+      save$ = this.productsService.updateProduct(current.id, body); // edición: idempotente
+    } else if (persisted) {
+      save$ = of(persisted); // reintento de alta: solo la imagen
+    } else {
+      save$ = this.productsService.createProduct(body);
+    }
 
     this.saving.set(true);
     this.apiError.set(null);
+    this.imageError.set(null);
 
-    request.subscribe({
-      next: (product) => {
-        this.saving.set(false);
-        this.saved.emit(product);
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.apiError.set(extractApiError(err));
-      },
-    });
+    save$
+      .pipe(
+        switchMap((product) => {
+          this.savedProduct.set(product); // el producto ya quedó guardado
+          return this.applyImage(product);
+        }),
+      )
+      .subscribe({
+        next: (product) => {
+          this.saving.set(false);
+          this.saved.emit(product);
+        },
+        error: (err) => {
+          this.saving.set(false);
+          // Si el producto ya se guardó, el error viene del paso de imagen.
+          if (this.savedProduct()) {
+            this.imageError.set(
+              'El producto se guardó, pero la imagen no se pudo subir. Volvé a intentar.',
+            );
+          } else {
+            this.apiError.set(extractApiError(err));
+          }
+        },
+      });
+  }
+
+  // Aplica el cambio de imagen sobre el producto ya guardado (paso 2).
+  private applyImage(product: ProductDto): Observable<ProductDto> {
+    const file = this.selectedFile();
+    if (file) {
+      return this.productsService.uploadImage(product.id, file);
+    }
+    if (this.removeExisting()) {
+      return this.productsService.deleteImage(product.id);
+    }
+    return of(product);
+  }
+
+  // Selección de archivo (input o drag&drop): valida tipo y tamaño en cliente.
+  protected onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.setFile(input.files?.[0] ?? null);
+    input.value = ''; // permite volver a elegir el mismo archivo
+  }
+
+  protected onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.setFile(event.dataTransfer?.files?.[0] ?? null);
+  }
+
+  protected onDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  private setFile(file: File | null): void {
+    if (!file) {
+      return;
+    }
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      this.imageError.set('Formato no válido. Usá JPG, PNG o WEBP.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      this.imageError.set('La imagen no debe superar 3 MB.');
+      return;
+    }
+    this.imageError.set(null);
+    this.selectedFile.set(file);
+    this.removeExisting.set(false);
+    this.setPreview(URL.createObjectURL(file), true);
+  }
+
+  // Quita la imagen: si había una existente, la marca para borrar al guardar.
+  protected onRemoveImage(): void {
+    this.imageError.set(null);
+    this.selectedFile.set(null);
+    if (this.product()?.imageUrl) {
+      this.removeExisting.set(true); // borrar la imagen existente al guardar
+    }
+    this.setPreview(null, false);
+  }
+
+  // Reinicia el estado de imagen al abrir/cambiar de producto en el panel.
+  private resetImageState(existingUrl: string | null): void {
+    this.selectedFile.set(null);
+    this.removeExisting.set(false);
+    this.imageError.set(null);
+    this.savedProduct.set(null);
+    this.setPreview(existingUrl, false);
+  }
+
+  private setPreview(url: string | null, isObjectUrl: boolean): void {
+    this.revokeObjectUrl();
+    this.objectUrl = isObjectUrl ? url : null;
+    this.previewUrl.set(url);
+  }
+
+  private revokeObjectUrl(): void {
+    if (this.objectUrl) {
+      URL.revokeObjectURL(this.objectUrl);
+      this.objectUrl = null;
+    }
   }
 
   protected createCategory(): void {

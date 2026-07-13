@@ -174,24 +174,32 @@
             @for (product of visibleProducts(); track product.id) {
               <tr class="transition-colors hover:bg-gray-50">
                 <td class="px-3 py-2">
-                  <!-- Placeholder de imagen del producto (el API aún no soporta imágenes) -->
-                  <span
-                    class="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-300"
-                  >
-                    <svg
-                      class="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                  @if (product.imageUrl) {
+                    <img
+                      [src]="product.imageUrl"
+                      [alt]="product.name"
+                      class="h-8 w-8 rounded-md border border-gray-200 object-cover"
+                    />
+                  } @else {
+                    <!-- Placeholder cuando el producto no tiene imagen -->
+                    <span
+                      class="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-300"
                     >
-                      <path
-                        d="m2.25 15.75 5.16-5.16a2.25 2.25 0 0 1 3.18 0l5.16 5.16m-1.5-1.5 1.41-1.41a2.25 2.25 0 0 1 3.18 0l2.91 2.91M3.75 19.5h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm12.75-12h.01"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="m2.25 15.75 5.16-5.16a2.25 2.25 0 0 1 3.18 0l5.16 5.16m-1.5-1.5 1.41-1.41a2.25 2.25 0 0 1 3.18 0l2.91 2.91M3.75 19.5h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm12.75-12h.01"
+                        />
+                      </svg>
+                    </span>
+                  }
                 </td>
                 <td class="px-3 py-2 text-gray-600">{{ product.code }}</td>
                 <td class="px-3 py-2 font-medium text-gray-900">{{ product.name }}</td>

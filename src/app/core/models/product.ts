@@ -6,6 +6,8 @@ export interface ProductDto {
   code: string;
   name: string;
   description: string | null;
+  // URL relativa de la imagen (/media/products/...), o null si no tiene.
+  imageUrl: string | null;
   salePrice: number;
   purchasePrice: number;
   stock: number;
@@ -20,6 +22,9 @@ export interface SaveProductRequest {
   code: string;
   name: string;
   description?: string;
+  // El PUT persiste imageUrl directo: al editar se reenvía el valor actual
+  // para no borrar la imagen. La subida/borrado real usa los endpoints /image.
+  imageUrl?: string | null;
   salePrice: number;
   purchasePrice: number;
   minimumStock: number;

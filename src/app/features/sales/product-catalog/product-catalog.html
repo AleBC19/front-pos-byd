@@ -67,24 +67,32 @@
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
         @for (product of products(); track product.id) {
           <div class="flex flex-col rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-            <!-- Placeholder de imagen: el API aún no maneja imágenes de producto -->
-            <div
-              class="mb-2 flex aspect-square items-center justify-center rounded-lg border border-gray-100 bg-gray-50 text-gray-300"
-            >
-              <svg
-                class="h-8 w-8"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+            @if (product.imageUrl) {
+              <img
+                [src]="product.imageUrl"
+                [alt]="product.name"
+                class="mb-2 aspect-square w-full rounded-lg border border-gray-100 object-cover"
+              />
+            } @else {
+              <!-- Placeholder cuando el producto no tiene imagen -->
+              <div
+                class="mb-2 flex aspect-square items-center justify-center rounded-lg border border-gray-100 bg-gray-50 text-gray-300"
               >
-                <path
-                  d="m2.25 15.75 5.16-5.16a2.25 2.25 0 0 1 3.18 0l5.16 5.16m-1.5-1.5 1.41-1.41a2.25 2.25 0 0 1 3.18 0l2.91 2.91M3.75 19.5h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm12.75-12h.01"
-                />
-              </svg>
-            </div>
+                <svg
+                  class="h-8 w-8"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="m2.25 15.75 5.16-5.16a2.25 2.25 0 0 1 3.18 0l5.16 5.16m-1.5-1.5 1.41-1.41a2.25 2.25 0 0 1 3.18 0l2.91 2.91M3.75 19.5h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm12.75-12h.01"
+                  />
+                </svg>
+              </div>
+            }
 
             <p class="line-clamp-2 min-h-[2.5rem] text-sm font-medium text-gray-900">
               {{ product.name }}

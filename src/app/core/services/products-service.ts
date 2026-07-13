@@ -44,6 +44,20 @@ export class ProductsService {
   activateProduct(id: number): Observable<ProductDto> {
     return this.http.patch<ProductDto>(`${this.baseUrl}/${id}/activate`, {});
   }
+
+  // Sube (o reemplaza) la imagen del producto. multipart/form-data con el campo "file".
+  // No se fija Content-Type: el navegador arma el boundary; el authInterceptor solo
+  // agrega Authorization y no lo pisa.
+  uploadImage(id: number, file: File): Observable<ProductDto> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ProductDto>(`${this.baseUrl}/${id}/image`, formData);
+  }
+
+  // Quita la imagen del producto (borra el archivo y limpia imageUrl).
+  deleteImage(id: number): Observable<ProductDto> {
+    return this.http.delete<ProductDto>(`${this.baseUrl}/${id}/image`);
+  }
 }
 
 // Convierte el query en HttpParams omitiendo valores vacíos o indefinidos.
