@@ -21,89 +21,156 @@
     </div>
   </header>
 
-  <form class="p-5" (submit)="$event.preventDefault(); save()">
+  <form class="p-5" [formGroup]="form" (ngSubmit)="save()">
+    @if (apiError(); as error) {
+      <div
+        class="mb-4 max-w-4xl rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-base text-red-700"
+      >
+        <p class="font-medium">{{ error.message }}</p>
+        @if (error.details.length) {
+          <ul class="mt-1 list-inside list-disc text-sm">
+            @for (detail of error.details; track detail) {
+              <li>{{ detail }}</li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
     <div class="grid max-w-4xl grid-cols-2 gap-x-5 gap-y-4">
       <label class="block text-sm font-medium text-gray-700">
         Nombre comercial
         <input
           type="text"
-          [value]="form().tradeName"
-          (input)="updateField('tradeName', $any($event.target).value)"
+          formControlName="commercialName"
           class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          [class.border-red-400]="invalid('commercialName')"
         />
+        @if (invalid('commercialName')) {
+          <span class="mt-1 block text-sm font-normal text-red-600"
+            >Requerido (máximo 200 caracteres).</span
+          >
+        }
       </label>
       <label class="block text-sm font-medium text-gray-700">
         Razón social
         <input
           type="text"
-          [value]="form().legalName"
-          (input)="updateField('legalName', $any($event.target).value)"
+          formControlName="legalName"
           class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          [class.border-red-400]="invalid('legalName')"
         />
+        @if (invalid('legalName')) {
+          <span class="mt-1 block text-sm font-normal text-red-600"
+            >Requerido (máximo 200 caracteres).</span
+          >
+        }
       </label>
       <label class="block text-sm font-medium text-gray-700">
         RFC
         <input
           type="text"
-          [value]="form().rfc"
-          (input)="updateField('rfc', $any($event.target).value)"
+          formControlName="rfc"
           class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base uppercase text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          [class.border-red-400]="invalid('rfc')"
         />
+        @if (invalid('rfc')) {
+          <span class="mt-1 block text-sm font-normal text-red-600"
+            >El RFC debe tener entre 12 y 13 caracteres.</span
+          >
+        }
       </label>
       <label class="block text-sm font-medium text-gray-700">
         Teléfono
         <input
           type="tel"
-          [value]="form().phone"
-          (input)="updateField('phone', $any($event.target).value)"
+          formControlName="phone"
           class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          [class.border-red-400]="invalid('phone')"
         />
+        @if (invalid('phone')) {
+          <span class="mt-1 block text-sm font-normal text-red-600">Máximo 30 caracteres.</span>
+        }
       </label>
       <label class="block text-sm font-medium text-gray-700">
         Correo electrónico
         <input
           type="email"
-          [value]="form().email"
-          (input)="updateField('email', $any($event.target).value)"
+          formControlName="email"
           class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          [class.border-red-400]="invalid('email')"
         />
+        @if (invalid('email')) {
+          <span class="mt-1 block text-sm font-normal text-red-600"
+            >Correo no válido (máximo 150 caracteres).</span
+          >
+        }
       </label>
       <label class="block text-sm font-medium text-gray-700">
         Dirección fiscal
         <input
           type="text"
-          [value]="form().address"
-          (input)="updateField('address', $any($event.target).value)"
+          formControlName="fiscalAddress"
           class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          [class.border-red-400]="invalid('fiscalAddress')"
         />
+        @if (invalid('fiscalAddress')) {
+          <span class="mt-1 block text-sm font-normal text-red-600">Máximo 500 caracteres.</span>
+        }
       </label>
     </div>
 
     <div class="mt-6 flex max-w-4xl items-center justify-between border-t border-gray-100 pt-5">
       <div class="flex items-center gap-3">
-        <div
-          class="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-xs font-medium text-gray-400"
-        >
-          LOGO
-        </div>
+        @if (profile()?.logoUrl; as logoUrl) {
+          <img
+            [src]="logoUrl"
+            alt="Logotipo del negocio"
+            class="h-16 w-16 rounded-lg border border-gray-200 object-contain"
+          />
+        } @else {
+          <div
+            class="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-xs font-medium text-gray-400"
+          >
+            LOGO
+          </div>
+        }
         <div>
           <p class="text-sm font-medium text-gray-800">Logotipo del negocio</p>
-          <button type="button" class="mt-1 text-sm font-medium text-blue-600 hover:text-blue-700">
-            Seleccionar imagen
-          </button>
+          <div class="mt-1 flex items-center gap-3">
+            <label class="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700">
+              {{ uploadingLogo() ? 'Subiendo...' : 'Seleccionar imagen' }}
+              <input
+                type="file"
+                accept="image/*"
+                class="hidden"
+                [disabled]="uploadingLogo()"
+                (change)="onLogoSelected($event)"
+              />
+            </label>
+            @if (profile()?.logoUrl) {
+              <button
+                type="button"
+                (click)="removeLogo()"
+                [disabled]="uploadingLogo()"
+                class="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-60"
+              >
+                Quitar
+              </button>
+            }
+          </div>
         </div>
       </div>
       <div class="flex items-center gap-3">
         @if (saved()) {
-          <span role="status" class="text-sm font-medium text-green-600"
-            >Cambios guardados localmente</span
-          >
+          <span role="status" class="text-sm font-medium text-green-600">Cambios guardados</span>
         }
         <button
           type="submit"
-          class="rounded-lg bg-blue-600 px-5 py-2.5 text-base font-medium text-white transition-colors hover:bg-blue-700"
+          [disabled]="saving() || loading()"
+          class="rounded-lg bg-blue-600 px-5 py-2.5 text-base font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Guardar cambios
+          {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
         </button>
       </div>
     </div>
