@@ -1,193 +1,229 @@
 <article class="rounded-xl border border-gray-200 bg-white shadow-sm">
-  <header class="flex items-center justify-between gap-4 border-b border-gray-200 px-5 py-4">
-    <div class="flex items-center gap-3">
-      <svg
-        class="h-8 w-8 text-gray-700"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path
-          d="M2.25 8.25h19.5m-18-4.5h16.5a1.5 1.5 0 0 1 1.5 1.5v13.5a1.5 1.5 0 0 1-1.5 1.5H3.75a1.5 1.5 0 0 1-1.5-1.5V5.25a1.5 1.5 0 0 1 1.5-1.5Zm2.25 12h3"
-        />
-      </svg>
-      <div>
-        <h2 class="text-xl font-semibold text-gray-900">Métodos de pago</h2>
-        <p class="text-sm text-gray-500">
-          Habilita y define el orden de los métodos disponibles al cobrar.
-        </p>
-      </div>
-    </div>
-    <button
-      type="button"
-      (click)="openCreate()"
-      class="flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-base font-medium text-white transition-colors hover:bg-blue-700"
+  <header class="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
+    <svg
+      class="h-8 w-8 text-gray-700"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
     >
-      <svg
-        class="h-5 w-5"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-      >
-        <path d="M12 4.5v15m7.5-7.5h-15" />
-      </svg>
-      Nuevo método
-    </button>
+      <path
+        d="M2.25 8.25h19.5m-18-4.5h16.5a1.5 1.5 0 0 1 1.5 1.5v13.5a1.5 1.5 0 0 1-1.5 1.5H3.75a1.5 1.5 0 0 1-1.5-1.5V5.25a1.5 1.5 0 0 1 1.5-1.5Zm2.25 12h3"
+      />
+    </svg>
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900">Métodos de pago</h2>
+      <p class="text-sm text-gray-500">Habilita los métodos disponibles al cobrar y sus datos.</p>
+    </div>
   </header>
 
-  <div class="p-5">
-    <div class="max-w-4xl overflow-hidden rounded-lg border border-gray-200">
-      @for (
-        method of methods();
-        track method.id;
-        let index = $index;
-        let first = $first;
-        let last = $last
-      ) {
-        <div
-          data-testid="payment-method-row"
-          class="flex items-center justify-between px-4 py-4"
-          [class.border-t]="!first"
-          [class.border-gray-100]="!first"
-        >
-          <div class="flex items-center gap-4">
-            <span
-              class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600"
-            >
-              @if (method.id === 'cash') {
-                <svg
-                  class="h-6 w-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M2.25 6.75h19.5v10.5H2.25V6.75Zm3 0a3 3 0 0 1-3 3m19.5 0a3 3 0 0 1-3-3m-13.5 10.5a3 3 0 0 0-3-3m19.5 0a3 3 0 0 0-3 3M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                  />
-                </svg>
-              } @else if (method.id === 'card') {
-                <svg
-                  class="h-6 w-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M2.25 8.25h19.5m-18-4.5h16.5a1.5 1.5 0 0 1 1.5 1.5v13.5a1.5 1.5 0 0 1-1.5 1.5H3.75a1.5 1.5 0 0 1-1.5-1.5V5.25a1.5 1.5 0 0 1 1.5-1.5Z"
-                  />
-                </svg>
-              } @else {
-                <svg
-                  class="h-6 w-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="m4.5 19.5 15-15m0 0v11.25m0-11.25H8.25" />
-                </svg>
-              }
-            </span>
-            <div>
-              <p class="text-base font-medium text-gray-900">{{ method.name }}</p>
-              <p class="text-sm text-gray-500">{{ method.description }}</p>
-            </div>
-          </div>
+  <form [formGroup]="form" (ngSubmit)="save()">
+    @if (apiError(); as error) {
+      <div
+        class="mx-5 mt-4 max-w-3xl rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-base text-red-700"
+      >
+        <p class="font-medium">{{ error.message }}</p>
+        @if (error.details.length) {
+          <ul class="mt-1 list-inside list-disc text-sm">
+            @for (detail of error.details; track detail) {
+              <li>{{ detail }}</li>
+            }
+          </ul>
+        }
+      </div>
+    }
 
-          <div class="flex items-center gap-4">
-            <button
-              type="button"
-              (click)="openEdit(method)"
-              [attr.aria-label]="'Editar ' + method.name"
-              class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
-            >
-              <svg
-                class="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="m16.86 4.49 1.32-1.32a1.88 1.88 0 1 1 2.65 2.65L7.5 19.13l-4.5 1.12 1.13-4.5L16.86 4.49Zm0 0 2.64 2.64"
-                />
-              </svg>
-            </button>
-            <div class="flex items-center overflow-hidden rounded-lg border border-gray-200">
-              <button
-                type="button"
-                (click)="move(index, -1)"
-                [disabled]="first"
-                [attr.aria-label]="'Subir ' + method.name"
-                class="px-3 py-2 text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-300"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                (click)="move(index, 1)"
-                [disabled]="last"
-                [attr.aria-label]="'Bajar ' + method.name"
-                class="border-l border-gray-200 px-3 py-2 text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-300"
-              >
-                ↓
-              </button>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-label]="'Activar ' + method.name"
-              [attr.aria-checked]="method.enabled"
-              (click)="toggle(method.id)"
-              [class.bg-blue-600]="method.enabled"
-              [class.bg-gray-300]="!method.enabled"
-              class="relative h-6 w-11 rounded-full transition-colors"
-            >
-              <span
-                [class.translate-x-5]="method.enabled"
-                [class.translate-x-0.5]="!method.enabled"
-                class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
-              ></span>
-            </button>
-            <span class="w-20 text-sm text-gray-700">{{
-              method.enabled ? 'Activado' : 'Desactivado'
-            }}</span>
+    <div class="max-w-3xl p-5">
+      <div class="overflow-hidden rounded-lg border border-gray-200 divide-y divide-gray-100">
+        <!-- Efectivo -->
+        <div class="flex items-center justify-between px-4 py-4">
+          <div>
+            <p class="text-base font-medium text-gray-900">Efectivo</p>
+            <p class="text-sm text-gray-500">Pagos recibidos en caja.</p>
           </div>
+          <button
+            type="button"
+            role="switch"
+            aria-label="Activar Efectivo"
+            [attr.aria-checked]="form.controls.cashEnabled.value"
+            (click)="toggle('cashEnabled')"
+            [class.bg-blue-600]="form.controls.cashEnabled.value"
+            [class.bg-gray-300]="!form.controls.cashEnabled.value"
+            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+          >
+            <span
+              [class.translate-x-5]="form.controls.cashEnabled.value"
+              [class.translate-x-0.5]="!form.controls.cashEnabled.value"
+              class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
+            ></span>
+          </button>
         </div>
+
+        <!-- Tarjeta de débito -->
+        <div class="flex items-center justify-between px-4 py-4">
+          <div>
+            <p class="text-base font-medium text-gray-900">Tarjeta de débito</p>
+            <p class="text-sm text-gray-500">Cobros con tarjeta de débito en terminal.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-label="Activar Tarjeta de débito"
+            [attr.aria-checked]="form.controls.debitCardEnabled.value"
+            (click)="toggle('debitCardEnabled')"
+            [class.bg-blue-600]="form.controls.debitCardEnabled.value"
+            [class.bg-gray-300]="!form.controls.debitCardEnabled.value"
+            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+          >
+            <span
+              [class.translate-x-5]="form.controls.debitCardEnabled.value"
+              [class.translate-x-0.5]="!form.controls.debitCardEnabled.value"
+              class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
+            ></span>
+          </button>
+        </div>
+
+        <!-- Tarjeta de crédito -->
+        <div class="flex items-center justify-between px-4 py-4">
+          <div>
+            <p class="text-base font-medium text-gray-900">Tarjeta de crédito</p>
+            <p class="text-sm text-gray-500">Cobros con tarjeta de crédito en terminal.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-label="Activar Tarjeta de crédito"
+            [attr.aria-checked]="form.controls.creditCardEnabled.value"
+            (click)="toggle('creditCardEnabled')"
+            [class.bg-blue-600]="form.controls.creditCardEnabled.value"
+            [class.bg-gray-300]="!form.controls.creditCardEnabled.value"
+            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+          >
+            <span
+              [class.translate-x-5]="form.controls.creditCardEnabled.value"
+              [class.translate-x-0.5]="!form.controls.creditCardEnabled.value"
+              class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
+            ></span>
+          </button>
+        </div>
+
+        <!-- Transferencia -->
+        <div class="flex items-center justify-between px-4 py-4">
+          <div>
+            <p class="text-base font-medium text-gray-900">Transferencia</p>
+            <p class="text-sm text-gray-500">Transferencias bancarias.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-label="Activar Transferencia"
+            [attr.aria-checked]="form.controls.bankTransferEnabled.value"
+            (click)="toggle('bankTransferEnabled')"
+            [class.bg-blue-600]="form.controls.bankTransferEnabled.value"
+            [class.bg-gray-300]="!form.controls.bankTransferEnabled.value"
+            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+          >
+            <span
+              [class.translate-x-5]="form.controls.bankTransferEnabled.value"
+              [class.translate-x-0.5]="!form.controls.bankTransferEnabled.value"
+              class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
+            ></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Datos de tarjeta: obligatorios si débito o crédito están activos -->
+      @if (cardEnabled()) {
+        <fieldset class="mt-5 rounded-lg border border-gray-200 p-4">
+          <legend class="px-1 text-sm font-medium text-gray-800">Datos de tarjeta</legend>
+          <div class="grid grid-cols-2 gap-4">
+            <label class="block text-sm font-medium text-gray-700">
+              Banco
+              <input
+                type="text"
+                formControlName="cardBank"
+                (input)="markChanged()"
+                class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                [class.border-red-400]="invalid('cardBank')"
+              />
+              @if (invalid('cardBank')) {
+                <span class="mt-1 block text-sm font-normal text-red-600"
+                  >Requerido (máximo 100 caracteres).</span
+                >
+              }
+            </label>
+            <label class="block text-sm font-medium text-gray-700">
+              ID de terminal
+              <input
+                type="text"
+                formControlName="cardTerminalId"
+                (input)="markChanged()"
+                class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                [class.border-red-400]="invalid('cardTerminalId')"
+              />
+              @if (invalid('cardTerminalId')) {
+                <span class="mt-1 block text-sm font-normal text-red-600"
+                  >Requerido (máximo 50 caracteres).</span
+                >
+              }
+            </label>
+          </div>
+        </fieldset>
+      }
+
+      <!-- Datos de transferencia: obligatorios si la transferencia está activa -->
+      @if (transferEnabled()) {
+        <fieldset class="mt-5 rounded-lg border border-gray-200 p-4">
+          <legend class="px-1 text-sm font-medium text-gray-800">Datos de transferencia</legend>
+          <div class="grid grid-cols-2 gap-4">
+            <label class="block text-sm font-medium text-gray-700">
+              Número de cuenta
+              <input
+                type="text"
+                formControlName="transferAccountNumber"
+                (input)="markChanged()"
+                class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                [class.border-red-400]="invalid('transferAccountNumber')"
+              />
+              @if (invalid('transferAccountNumber')) {
+                <span class="mt-1 block text-sm font-normal text-red-600"
+                  >Requerido (máximo 50 caracteres).</span
+                >
+              }
+            </label>
+            <label class="block text-sm font-medium text-gray-700">
+              Titular de la cuenta
+              <input
+                type="text"
+                formControlName="transferAccountHolder"
+                (input)="markChanged()"
+                class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                [class.border-red-400]="invalid('transferAccountHolder')"
+              />
+              @if (invalid('transferAccountHolder')) {
+                <span class="mt-1 block text-sm font-normal text-red-600"
+                  >Requerido (máximo 150 caracteres).</span
+                >
+              }
+            </label>
+          </div>
+        </fieldset>
       }
     </div>
-  </div>
 
-  <footer class="border-t border-gray-200 px-5 py-3">
-    <p class="text-right text-sm text-gray-500">Los cambios se conservan durante esta sesión.</p>
-  </footer>
+    <footer class="flex items-center justify-end gap-3 border-t border-gray-200 px-5 py-4">
+      @if (saved()) {
+        <span role="status" class="text-sm font-medium text-green-600">Cambios guardados</span>
+      }
+      <button
+        type="submit"
+        [disabled]="saving() || loading()"
+        class="rounded-lg bg-blue-600 px-5 py-2.5 text-base font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </footer>
+  </form>
 </article>
-
-<app-side-panel
-  [(open)]="panelOpen"
-  [title]="panelTitle()"
-  width="max-w-[480px]"
-  (closed)="closePanel()"
->
-  <app-payment-method-form
-    [method]="editingMethod()"
-    [reservedNames]="reservedNames()"
-    (saved)="onSaved($event)"
-    (cancelled)="closePanel()"
-  />
-</app-side-panel>

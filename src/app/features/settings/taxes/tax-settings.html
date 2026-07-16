@@ -19,94 +19,82 @@
     </div>
   </header>
 
+  @if (apiError(); as error) {
+    <div
+      class="mx-5 mt-4 max-w-4xl rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-base text-red-700"
+    >
+      <p class="font-medium">{{ error.message }}</p>
+      @if (error.details.length) {
+        <ul class="mt-1 list-inside list-disc text-sm">
+          @for (detail of error.details; track detail) {
+            <li>{{ detail }}</li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
   <div class="max-w-4xl divide-y divide-gray-100 px-5">
     <div class="flex items-center justify-between py-5">
       <div>
         <p class="text-base font-medium text-gray-900">Aplicar impuestos</p>
-        <p class="mt-0.5 text-sm text-gray-500">Calcula impuestos en las ventas realizadas.</p>
+        <p class="mt-0.5 text-sm text-gray-500">Calcula el IVA en las ventas realizadas.</p>
       </div>
       <button
         type="button"
         role="switch"
-        [attr.aria-checked]="enabled()"
-        (click)="enabled.set(!enabled()); markChanged()"
-        [class.bg-blue-600]="enabled()"
-        [class.bg-gray-300]="!enabled()"
+        aria-label="Aplicar impuestos"
+        [attr.aria-checked]="applyIva()"
+        (click)="toggleApplyIva()"
+        [class.bg-blue-600]="applyIva()"
+        [class.bg-gray-300]="!applyIva()"
         class="relative h-6 w-11 rounded-full transition-colors"
       >
         <span
-          [class.translate-x-5]="enabled()"
-          [class.translate-x-0.5]="!enabled()"
+          [class.translate-x-5]="applyIva()"
+          [class.translate-x-0.5]="!applyIva()"
           class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
         ></span>
       </button>
     </div>
 
-    <div class="grid grid-cols-2 gap-5 py-5">
-      <label class="block text-sm font-medium text-gray-700">
-        Impuesto predeterminado
-        <select
-          [disabled]="!enabled()"
-          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none disabled:bg-gray-100 disabled:text-gray-400 focus:border-blue-500"
-        >
-          <option>IVA</option>
-        </select>
-      </label>
-      <label class="block text-sm font-medium text-gray-700">
+    <div class="py-5">
+      <label class="block max-w-xs text-sm font-medium text-gray-700">
         Tasa de IVA
         <span class="relative mt-1.5 block">
           <input
             type="number"
             min="0"
             max="100"
-            [disabled]="!enabled()"
-            [value]="rate()"
-            (input)="rate.set($any($event.target).value); markChanged()"
+            step="0.01"
+            [disabled]="!applyIva()"
+            [value]="ivaRate()"
+            (input)="setRate($any($event.target).value)"
             class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-10 text-base text-gray-900 outline-none disabled:bg-gray-100 disabled:text-gray-400 focus:border-blue-500"
+            [class.border-red-400]="rateInvalid()"
           />
           <span class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500">%</span>
         </span>
+        @if (rateInvalid()) {
+          <span class="mt-1 block text-sm font-normal text-red-600"
+            >Ingresa un valor entre 0 y 100.</span
+          >
+        }
       </label>
-    </div>
-
-    <div class="flex items-center justify-between py-5">
-      <div>
-        <p class="text-base font-medium text-gray-900">Precios con impuestos incluidos</p>
-        <p class="mt-0.5 text-sm text-gray-500">
-          Los precios capturados ya incluyen el IVA configurado.
-        </p>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        [disabled]="!enabled()"
-        [attr.aria-checked]="includedInPrices()"
-        (click)="includedInPrices.set(!includedInPrices()); markChanged()"
-        [class.bg-blue-600]="includedInPrices() && enabled()"
-        [class.bg-gray-300]="!includedInPrices() || !enabled()"
-        class="relative h-6 w-11 rounded-full transition-colors disabled:opacity-60"
-      >
-        <span
-          [class.translate-x-5]="includedInPrices()"
-          [class.translate-x-0.5]="!includedInPrices()"
-          class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
-        ></span>
-      </button>
     </div>
   </div>
 
   <footer class="flex items-center justify-end gap-3 border-t border-gray-200 px-5 py-4">
     @if (saved()) {
-      <span role="status" class="text-sm font-medium text-green-600"
-        >Cambios guardados localmente</span
-      >
+      <span role="status" class="text-sm font-medium text-green-600">Cambios guardados</span>
     }
     <button
       type="button"
       (click)="save()"
-      class="rounded-lg bg-blue-600 px-5 py-2.5 text-base font-medium text-white hover:bg-blue-700"
+      [disabled]="saving() || loading() || rateInvalid()"
+      class="rounded-lg bg-blue-600 px-5 py-2.5 text-base font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      Guardar cambios
+      {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
     </button>
   </footer>
 </article>

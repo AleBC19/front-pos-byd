@@ -1,215 +1,348 @@
-<article class="rounded-xl border border-gray-200 bg-white shadow-sm">
-  <header class="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
-    <svg
-      class="h-8 w-8 text-gray-700"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path
-        d="M6.75 9V3.75h10.5V9m-10.5 8.25h-3A1.5 1.5 0 0 1 2.25 15.75v-5.25A1.5 1.5 0 0 1 3.75 9h16.5a1.5 1.5 0 0 1 1.5 1.5v5.25a1.5 1.5 0 0 1-1.5 1.5h-3m-10.5-3h10.5v6H6.75v-6Z"
-      />
-    </svg>
-    <div>
-      <h2 class="text-xl font-semibold text-gray-900">Impresora y recibo</h2>
-      <p class="text-sm text-gray-500">Configura la impresora térmica y el formato del recibo.</p>
-    </div>
-  </header>
-
-  <div class="max-w-5xl space-y-6 p-5">
-    <section>
-      <label for="thermal-printer" class="text-sm font-medium text-gray-800"
-        >Impresora térmica</label
+<div class="space-y-6">
+  <article class="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <header class="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
+      <svg
+        class="h-8 w-8 text-gray-700"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       >
-      <div class="mt-1.5 grid grid-cols-[minmax(0,1fr)_220px] gap-4">
-        <select
-          id="thermal-printer"
-          [value]="selectedPrinter()"
-          (change)="selectedPrinter.set($any($event.target).value); feedback.set(null)"
-          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        >
-          <option>POS-58 (USB)</option>
-          <option>POS-80 (Red)</option>
-        </select>
+        <path
+          d="M6.75 9V3.75h10.5V9m-10.5 8.25h-3A1.5 1.5 0 0 1 2.25 15.75v-5.25A1.5 1.5 0 0 1 3.75 9h16.5a1.5 1.5 0 0 1 1.5 1.5v5.25a1.5 1.5 0 0 1-1.5 1.5h-3m-10.5-3h10.5v6H6.75v-6Z"
+        />
+      </svg>
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900">Impresora térmica</h2>
+        <p class="text-sm text-gray-500">Configura la impresora térmica del punto de venta.</p>
+      </div>
+    </header>
+
+    <form class="max-w-3xl space-y-6 p-5" [formGroup]="printerForm" (ngSubmit)="savePrinter()">
+      @if (printerError(); as error) {
+        <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-base text-red-700">
+          <p class="font-medium">{{ error.message }}</p>
+          @if (error.details.length) {
+            <ul class="mt-1 list-inside list-disc text-sm">
+              @for (detail of error.details; track detail) {
+                <li>{{ detail }}</li>
+              }
+            </ul>
+          }
+        </div>
+      }
+
+      <section class="flex items-center justify-between">
+        <div>
+          <p class="text-base font-medium text-gray-900">Habilitar impresión</p>
+          <p class="mt-0.5 text-sm text-gray-500">Imprime el recibo automáticamente al cobrar.</p>
+        </div>
         <button
           type="button"
-          (click)="showFeedback('Administración de impresoras disponible al conectar la API.')"
-          class="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-base font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          role="switch"
+          aria-label="Habilitar impresión"
+          [attr.aria-checked]="printerForm.controls.enabled.value"
+          (click)="toggle('enabled')"
+          [class.bg-blue-600]="printerForm.controls.enabled.value"
+          [class.bg-gray-300]="!printerForm.controls.enabled.value"
+          class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
         >
-          <svg
-            class="h-5 w-5 text-blue-600"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.7"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+          <span
+            [class.translate-x-5]="printerForm.controls.enabled.value"
+            [class.translate-x-0.5]="!printerForm.controls.enabled.value"
+            class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
+          ></span>
+        </button>
+      </section>
+
+      <section>
+        <p class="text-sm font-medium text-gray-800">Conexión</p>
+        <div
+          class="mt-1.5 grid max-w-xs grid-cols-2 overflow-hidden rounded-lg border border-gray-300"
+        >
+          <button
+            type="button"
+            (click)="setConnection('Usb')"
+            [class]="
+              connection() === 'Usb'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            "
+            class="px-4 py-2.5 text-base font-medium transition-colors"
           >
-            <path d="M12 15.75A3.75 3.75 0 1 0 12 8.25a3.75 3.75 0 0 0 0 7.5Z" />
-            <path
-              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.5 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.08A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.12.6.65 1.04 1.27 1.04H21a2 2 0 1 1 0 4h-.09c-.62 0-1.15.43-1.51 1Z"
-            />
-          </svg>
-          Administrar impresoras
-        </button>
-      </div>
-    </section>
+            USB
+          </button>
+          <button
+            type="button"
+            (click)="setConnection('Network')"
+            [class]="
+              connection() === 'Network'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            "
+            class="border-l border-gray-300 px-4 py-2.5 text-base font-medium transition-colors"
+          >
+            Red
+          </button>
+        </div>
+      </section>
 
-    <section>
-      <p class="text-sm font-medium text-gray-800">Ancho de papel</p>
-      <div
-        class="mt-1.5 grid max-w-3xl grid-cols-2 overflow-hidden rounded-lg border border-gray-300"
-      >
-        <button
-          type="button"
-          (click)="paperWidth.set(58); feedback.set(null)"
-          [class]="
-            paperWidth() === 58
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
-          "
-          class="px-4 py-2.5 text-base font-medium transition-colors"
-        >
-          58 mm
-        </button>
-        <button
-          type="button"
-          (click)="paperWidth.set(80); feedback.set(null)"
-          [class]="
-            paperWidth() === 80
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
-          "
-          class="border-l border-gray-300 px-4 py-2.5 text-base font-medium transition-colors"
-        >
-          80 mm
-        </button>
-      </div>
-    </section>
-
-    <section class="flex items-center gap-5">
-      <p class="text-sm font-medium text-gray-800">Probar impresión</p>
-      <button
-        type="button"
-        (click)="showFeedback('Prueba simulada correctamente para ' + selectedPrinter() + '.')"
-        class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"
-      >
-        <svg
-          class="h-5 w-5 text-blue-600"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path
-            d="M6.75 9V3.75h10.5V9m-10.5 8.25h-3A1.5 1.5 0 0 1 2.25 15.75v-5.25A1.5 1.5 0 0 1 3.75 9h16.5a1.5 1.5 0 0 1 1.5 1.5v5.25a1.5 1.5 0 0 1-1.5 1.5h-3m-10.5-3h10.5v6H6.75v-6Z"
+      @if (connection() === 'Usb') {
+        <label class="block max-w-md text-sm font-medium text-gray-700">
+          Impresora instalada
+          <input
+            type="text"
+            formControlName="printerName"
+            list="available-printers"
+            placeholder="Selecciona o escribe el nombre"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            [class.border-red-400]="invalidPrinter('printerName')"
           />
-        </svg>
-        Probar impresión
-      </button>
-    </section>
-
-    <div class="divide-y divide-gray-100 border-y border-gray-100">
-      <section class="flex items-center justify-between py-4">
-        <div>
-          <p class="text-base font-medium text-gray-900">Cajón de dinero (Cash Drawer Kick)</p>
-          <p class="mt-0.5 text-sm text-gray-500">
-            Enviar comando para abrir el cajón al realizar una venta.
-          </p>
+          <datalist id="available-printers">
+            @for (printer of availablePrinters(); track printer) {
+              <option [value]="printer"></option>
+            }
+          </datalist>
+          @if (invalidPrinter('printerName')) {
+            <span class="mt-1 block text-sm font-normal text-red-600"
+              >Requerido para conexión USB.</span
+            >
+          }
+        </label>
+      } @else {
+        <div class="grid max-w-md grid-cols-[minmax(0,1fr)_120px] gap-4">
+          <label class="block text-sm font-medium text-gray-700">
+            Dirección IP
+            <input
+              type="text"
+              formControlName="ipAddress"
+              placeholder="192.168.0.50"
+              class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              [class.border-red-400]="invalidPrinter('ipAddress')"
+            />
+            @if (invalidPrinter('ipAddress')) {
+              <span class="mt-1 block text-sm font-normal text-red-600"
+                >Requerido para conexión de red.</span
+              >
+            }
+          </label>
+          <label class="block text-sm font-medium text-gray-700">
+            Puerto
+            <input
+              type="number"
+              formControlName="port"
+              min="1"
+              max="65535"
+              class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              [class.border-red-400]="invalidPrinter('port')"
+            />
+          </label>
         </div>
-        <div class="flex items-center gap-3">
-          <button
-            type="button"
-            role="switch"
-            aria-label="Activar cajón de dinero"
-            [attr.aria-checked]="cashDrawerEnabled()"
-            (click)="cashDrawerEnabled.set(!cashDrawerEnabled()); feedback.set(null)"
-            [class.bg-blue-600]="cashDrawerEnabled()"
-            [class.bg-gray-300]="!cashDrawerEnabled()"
-            class="relative h-6 w-11 rounded-full transition-colors"
+      }
+
+      <div class="grid max-w-md grid-cols-2 gap-4">
+        <label class="block text-sm font-medium text-gray-700">
+          Caracteres por línea
+          <input
+            type="number"
+            formControlName="charsPerLine"
+            min="1"
+            max="96"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            [class.border-red-400]="invalidPrinter('charsPerLine')"
+          />
+          @if (invalidPrinter('charsPerLine')) {
+            <span class="mt-1 block text-sm font-normal text-red-600">Entre 1 y 96.</span>
+          }
+        </label>
+        <label class="block text-sm font-medium text-gray-700">
+          Code page
+          <select
+            formControlName="codePage"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           >
-            <span
-              [class.translate-x-5]="cashDrawerEnabled()"
-              [class.translate-x-0.5]="!cashDrawerEnabled()"
-              class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
-            ></span>
-          </button>
-          <span class="w-20 text-sm text-gray-700">{{
-            cashDrawerEnabled() ? 'Activado' : 'Desactivado'
-          }}</span>
-        </div>
-      </section>
+            @for (cp of codePages; track cp) {
+              <option [ngValue]="cp">{{ cp }}</option>
+            }
+          </select>
+        </label>
+      </div>
 
-      <section class="flex items-center justify-between py-4">
+      <section class="flex items-center justify-between border-t border-gray-100 pt-5">
         <div>
-          <p class="text-base font-medium text-gray-900">Corte automático de papel</p>
-          <p class="mt-0.5 text-sm text-gray-500">Corta el papel al finalizar cada recibo.</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <button
-            type="button"
-            role="switch"
-            aria-label="Activar corte automático"
-            [attr.aria-checked]="autoCutEnabled()"
-            (click)="autoCutEnabled.set(!autoCutEnabled()); feedback.set(null)"
-            [class.bg-blue-600]="autoCutEnabled()"
-            [class.bg-gray-300]="!autoCutEnabled()"
-            class="relative h-6 w-11 rounded-full transition-colors"
-          >
-            <span
-              [class.translate-x-5]="autoCutEnabled()"
-              [class.translate-x-0.5]="!autoCutEnabled()"
-              class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
-            ></span>
-          </button>
-          <span class="w-20 text-sm text-gray-700">{{
-            autoCutEnabled() ? 'Activado' : 'Desactivado'
-          }}</span>
-        </div>
-      </section>
-
-      <section class="flex items-center justify-between py-4">
-        <div>
-          <p class="text-base font-medium text-gray-900">Encabezado del recibo</p>
+          <p class="text-base font-medium text-gray-900">Cajón de dinero</p>
           <p class="mt-0.5 text-sm text-gray-500">
-            Personaliza los datos que aparecen al inicio del recibo.
+            Abrir el cajón al registrar una venta en efectivo.
           </p>
         </div>
         <button
           type="button"
-          (click)="showFeedback('Edición de encabezado disponible al conectar la API.')"
-          class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"
+          role="switch"
+          aria-label="Abrir cajón en venta en efectivo"
+          [attr.aria-checked]="printerForm.controls.openDrawerOnCashSale.value"
+          (click)="toggle('openDrawerOnCashSale')"
+          [class.bg-blue-600]="printerForm.controls.openDrawerOnCashSale.value"
+          [class.bg-gray-300]="!printerForm.controls.openDrawerOnCashSale.value"
+          class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
         >
-          <svg
-            class="h-5 w-5 text-blue-600"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path
-              d="m16.86 4.49 1.32-1.32a1.88 1.88 0 1 1 2.65 2.65L7.5 19.13l-4.5 1.12 1.13-4.5L16.86 4.49Zm0 0 2.64 2.64"
-            />
-          </svg>
-          Editar encabezado
+          <span
+            [class.translate-x-5]="printerForm.controls.openDrawerOnCashSale.value"
+            [class.translate-x-0.5]="!printerForm.controls.openDrawerOnCashSale.value"
+            class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
+          ></span>
         </button>
       </section>
-    </div>
 
-    @if (feedback(); as message) {
-      <p
-        role="status"
-        class="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700"
+      @if (testResult(); as result) {
+        <p
+          role="status"
+          class="rounded-lg border px-4 py-3 text-sm"
+          [class]="
+            result.ok
+              ? 'border-green-100 bg-green-50 text-green-700'
+              : 'border-red-100 bg-red-50 text-red-700'
+          "
+        >
+          {{ result.message }}
+        </p>
+      }
+
+      <div class="flex items-center justify-between border-t border-gray-100 pt-5">
+        <button
+          type="button"
+          (click)="testPrint()"
+          [disabled]="testing() || loading()"
+          class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-base font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ testing() ? 'Enviando...' : 'Probar impresión' }}
+        </button>
+        <div class="flex items-center gap-3">
+          @if (printerSaved()) {
+            <span role="status" class="text-sm font-medium text-green-600">Cambios guardados</span>
+          }
+          <button
+            type="submit"
+            [disabled]="savingPrinter() || loading()"
+            class="rounded-lg bg-blue-600 px-5 py-2.5 text-base font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {{ savingPrinter() ? 'Guardando...' : 'Guardar impresora' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </article>
+
+  <article class="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <header class="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
+      <svg
+        class="h-8 w-8 text-gray-700"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       >
-        {{ message }}
-      </p>
-    }
-  </div>
-</article>
+        <path
+          d="M6 2.25h9l3 3v16.5l-2.25-1.5-2.25 1.5-2.25-1.5-2.25 1.5-2.25-1.5L6 21.75V2.25Zm3 5.25h6M9 11.25h6M9 15h3"
+        />
+      </svg>
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900">Recibo</h2>
+        <p class="text-sm text-gray-500">Encabezado y pie que se imprimen en el ticket.</p>
+      </div>
+    </header>
+
+    <form class="max-w-3xl space-y-4 p-5" [formGroup]="receiptForm" (ngSubmit)="saveReceipt()">
+      @if (receiptError(); as error) {
+        <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-base text-red-700">
+          <p class="font-medium">{{ error.message }}</p>
+          @if (error.details.length) {
+            <ul class="mt-1 list-inside list-disc text-sm">
+              @for (detail of error.details; track detail) {
+                <li>{{ detail }}</li>
+              }
+            </ul>
+          }
+        </div>
+      }
+
+      <div class="grid grid-cols-2 gap-x-5 gap-y-4">
+        <label class="block text-sm font-medium text-gray-700">
+          Nombre del negocio
+          <input
+            type="text"
+            formControlName="businessName"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            [class.border-red-400]="invalidReceipt('businessName')"
+          />
+          @if (invalidReceipt('businessName')) {
+            <span class="mt-1 block text-sm font-normal text-red-600"
+              >Requerido (máximo 120 caracteres).</span
+            >
+          }
+        </label>
+        <label class="block text-sm font-medium text-gray-700">
+          RFC
+          <input
+            type="text"
+            formControlName="taxId"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base uppercase text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            [class.border-red-400]="invalidReceipt('taxId')"
+          />
+        </label>
+        <label class="block text-sm font-medium text-gray-700">
+          Dirección
+          <input
+            type="text"
+            formControlName="address"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            [class.border-red-400]="invalidReceipt('address')"
+          />
+        </label>
+        <label class="block text-sm font-medium text-gray-700">
+          Teléfono
+          <input
+            type="tel"
+            formControlName="phone"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            [class.border-red-400]="invalidReceipt('phone')"
+          />
+        </label>
+        <label class="block text-sm font-medium text-gray-700">
+          Leyenda de encabezado
+          <input
+            type="text"
+            formControlName="headerLegend"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            [class.border-red-400]="invalidReceipt('headerLegend')"
+          />
+        </label>
+        <label class="block text-sm font-medium text-gray-700">
+          Mensaje de pie
+          <input
+            type="text"
+            formControlName="footerMessage"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            [class.border-red-400]="invalidReceipt('footerMessage')"
+          />
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+        @if (receiptSaved()) {
+          <span role="status" class="text-sm font-medium text-green-600">Cambios guardados</span>
+        }
+        <button
+          type="submit"
+          [disabled]="savingReceipt() || loading()"
+          class="rounded-lg bg-blue-600 px-5 py-2.5 text-base font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ savingReceipt() ? 'Guardando...' : 'Guardar recibo' }}
+        </button>
+      </div>
+    </form>
+  </article>
+</div>

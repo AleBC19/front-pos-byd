@@ -21,47 +21,56 @@
     </div>
   </header>
 
-  <div class="max-w-4xl space-y-5 p-5">
-    <section class="grid grid-cols-[minmax(0,1fr)_180px] gap-5">
-      <label class="block text-sm font-medium text-gray-700">
-        Ubicación de los respaldos
-        <div class="mt-1.5 flex">
-          <input
-            type="text"
-            [value]="location()"
-            (input)="location.set($any($event.target).value); feedback.set(null)"
-            class="min-w-0 flex-1 rounded-l-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500"
-          />
-          <button
-            type="button"
-            (click)="
-              feedback.set('Selector de carpeta disponible en la integración de escritorio.')
-            "
-            class="rounded-r-lg border border-l-0 border-gray-300 px-4 text-base font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Examinar
-          </button>
-        </div>
-      </label>
-      <label class="block text-sm font-medium text-gray-700">
-        Frecuencia
-        <select
-          [value]="frequency()"
-          (change)="frequency.set($any($event.target).value); feedback.set(null)"
-          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500"
-        >
-          <option>Diario</option>
-          <option>Semanal</option>
-          <option>Manual</option>
-        </select>
-      </label>
-    </section>
+  <form class="max-w-4xl p-5" [formGroup]="form" (ngSubmit)="save()">
+    @if (apiError(); as error) {
+      <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-base text-red-700">
+        <p class="font-medium">{{ error.message }}</p>
+        @if (error.details.length) {
+          <ul class="mt-1 list-inside list-disc text-sm">
+            @for (detail of error.details; track detail) {
+              <li>{{ detail }}</li>
+            }
+          </ul>
+        }
+      </div>
+    }
 
-    <section class="flex items-center justify-between border-y border-gray-100 py-5">
+    <label class="block text-sm font-medium text-gray-700">
+      Ubicación de los respaldos
+      <div class="mt-1.5 flex">
+        <input
+          type="text"
+          formControlName="destinationDirectory"
+          (input)="markChanged()"
+          placeholder="C:\DDVC\Respaldos"
+          class="min-w-0 flex-1 rounded-l-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500"
+          [class.border-red-400]="invalid('destinationDirectory')"
+        />
+        <button
+          type="button"
+          disabled
+          title="Disponible en la app de escritorio"
+          class="cursor-not-allowed rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 px-4 text-base font-medium text-gray-400"
+        >
+          Examinar
+        </button>
+      </div>
+      @if (invalid('destinationDirectory')) {
+        <span class="mt-1 block text-sm font-normal text-red-600"
+          >Ingresa una ruta absoluta en el servidor.</span
+        >
+      } @else {
+        <span class="mt-1 block text-sm font-normal text-gray-400"
+          >Ruta absoluta en el servidor donde se guardarán los respaldos.</span
+        >
+      }
+    </label>
+
+    <section class="mt-5 flex items-center justify-between border-t border-gray-100 pt-5">
       <div>
         <p class="text-base font-medium text-gray-900">Respaldo automático</p>
         <p class="mt-0.5 text-sm text-gray-500">
-          Genera copias automáticamente con la frecuencia seleccionada.
+          Genera una copia diaria a la hora indicada y conserva las más recientes.
         </p>
       </div>
       <div class="flex items-center gap-3">
@@ -69,37 +78,85 @@
           type="button"
           role="switch"
           aria-label="Activar respaldo automático"
-          [attr.aria-checked]="autoBackup()"
-          (click)="autoBackup.set(!autoBackup()); feedback.set(null)"
-          [class.bg-blue-600]="autoBackup()"
-          [class.bg-gray-300]="!autoBackup()"
-          class="relative h-6 w-11 rounded-full transition-colors"
+          [attr.aria-checked]="form.controls.autoEnabled.value"
+          (click)="toggleAuto()"
+          [class.bg-blue-600]="form.controls.autoEnabled.value"
+          [class.bg-gray-300]="!form.controls.autoEnabled.value"
+          class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
         >
           <span
-            [class.translate-x-5]="autoBackup()"
-            [class.translate-x-0.5]="!autoBackup()"
+            [class.translate-x-5]="form.controls.autoEnabled.value"
+            [class.translate-x-0.5]="!form.controls.autoEnabled.value"
             class="absolute top-0.5 left-0 h-5 w-5 rounded-full bg-white shadow transition-transform"
           ></span>
         </button>
         <span class="w-20 text-sm text-gray-700">{{
-          autoBackup() ? 'Activado' : 'Desactivado'
+          form.controls.autoEnabled.value ? 'Activado' : 'Desactivado'
         }}</span>
       </div>
     </section>
 
+    <div class="mt-5 grid max-w-md grid-cols-2 gap-5">
+      <label class="block text-sm font-medium text-gray-700">
+        Hora del respaldo
+        <input
+          type="time"
+          formControlName="dailyTime"
+          (input)="markChanged()"
+          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500"
+          [class.border-red-400]="invalid('dailyTime')"
+        />
+      </label>
+      <label class="block text-sm font-medium text-gray-700">
+        Copias a conservar
+        <input
+          type="number"
+          formControlName="retentionCount"
+          (input)="markChanged()"
+          min="1"
+          max="365"
+          class="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-blue-500"
+          [class.border-red-400]="invalid('retentionCount')"
+        />
+        @if (invalid('retentionCount')) {
+          <span class="mt-1 block text-sm font-normal text-red-600">Entre 1 y 365.</span>
+        }
+      </label>
+    </div>
+
+    <div class="mt-6 flex items-center justify-end gap-3 border-t border-gray-100 pt-5">
+      @if (saved()) {
+        <span role="status" class="text-sm font-medium text-green-600">Cambios guardados</span>
+      }
+      <button
+        type="submit"
+        [disabled]="saving() || loading()"
+        class="rounded-lg bg-blue-600 px-5 py-2.5 text-base font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </form>
+
+  <div class="max-w-4xl space-y-4 border-t border-gray-200 px-5 py-5">
     <section
       class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-4"
     >
       <div>
         <p class="text-sm text-gray-500">Último respaldo</p>
         <p class="mt-0.5 text-base font-medium text-gray-900">
-          Aún no se ha creado ningún respaldo
+          @if (lastRunAt(); as at) {
+            {{ at | date: 'dd/MM/yyyy HH:mm' }}
+          } @else {
+            Aún no se ha creado ningún respaldo
+          }
         </p>
       </div>
       <button
         type="button"
         (click)="createBackup()"
-        class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-base font-medium text-white hover:bg-blue-700"
+        [disabled]="creating()"
+        class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-base font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <svg
           class="h-5 w-5"
@@ -114,17 +171,47 @@
             d="M12 16.5V9.75m0 0 2.25 2.25M12 9.75 9.75 12M6.75 18.75A4.5 4.5 0 0 1 6.21 9.78 6 6 0 0 1 17.74 8.6a4.88 4.88 0 0 1-.99 9.65"
           />
         </svg>
-        Crear respaldo ahora
+        {{ creating() ? 'Creando...' : 'Crear respaldo ahora' }}
       </button>
     </section>
 
     @if (feedback(); as message) {
       <p
         role="status"
-        class="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700"
+        class="rounded-lg border px-4 py-3 text-sm"
+        [class]="
+          message.ok
+            ? 'border-green-100 bg-green-50 text-green-700'
+            : 'border-red-100 bg-red-50 text-red-700'
+        "
       >
-        {{ message }}
+        {{ message.message }}
       </p>
+    }
+
+    @if (backups().length) {
+      <div class="overflow-hidden rounded-lg border border-gray-200">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-50 text-gray-500">
+            <tr>
+              <th class="px-4 py-2.5 font-medium">Archivo</th>
+              <th class="px-4 py-2.5 font-medium">Tamaño</th>
+              <th class="px-4 py-2.5 font-medium">Fecha</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (backup of backups(); track backup.name) {
+              <tr>
+                <td class="px-4 py-2.5 text-gray-900">{{ backup.name }}</td>
+                <td class="px-4 py-2.5 text-gray-600">{{ formatSize(backup.sizeBytes) }}</td>
+                <td class="px-4 py-2.5 text-gray-600">
+                  {{ backup.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
   </div>
 </article>
