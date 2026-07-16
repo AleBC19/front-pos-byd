@@ -1,86 +1,161 @@
-import { Component, computed, signal } from '@angular/core';
-import { SidePanel } from '../../../shared/components/side-panel/side-panel';
-import { PaymentMethodForm } from './payment-method-form';
-import { PaymentMethod, PaymentMethodFormValue } from './payment-method.models';
+import { Component, computed, inject, signal } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ApiError, extractApiError } from '../../../core/models/api';
+import { SavePaymentSettingsRequest } from '../../../core/models/configuration';
+import { ConfigurationService } from '../../../core/services/configuration-service';
 
+// Configuración fija de los métodos de pago del punto de venta, conectada a
+// /api/configuration/payment-methods (GET/PUT). El backend valida de forma
+// condicional: los datos de tarjeta son obligatorios si débito o crédito están
+// activos, y los de transferencia si la transferencia está activa.
 @Component({
   selector: 'app-payment-methods-settings',
   templateUrl: './payment-methods-settings.html',
-  imports: [SidePanel, PaymentMethodForm],
+  imports: [ReactiveFormsModule],
 })
 export class PaymentMethodsSettings {
-  protected readonly methods = signal<PaymentMethod[]>([
-    { id: 'cash', name: 'Efectivo', description: 'Pagos recibidos en caja', enabled: true },
-    { id: 'card', name: 'Tarjeta', description: 'Tarjetas de crédito y débito', enabled: true },
-    {
-      id: 'transfer',
-      name: 'Transferencia',
-      description: 'Transferencias bancarias',
-      enabled: true,
-    },
-  ]);
-  protected readonly panelOpen = signal(false);
-  protected readonly panelTitle = signal('Nuevo método de pago');
-  protected readonly editingMethod = signal<PaymentMethod | null>(null);
-  protected readonly reservedNames = computed(() => {
-    const editingId = this.editingMethod()?.id;
-    return this.methods()
-      .filter((method) => method.id !== editingId)
-      .map((method) => method.name);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly configuration = inject(ConfigurationService);
+
+  protected readonly loading = signal(true);
+  protected readonly saving = signal(false);
+  protected readonly saved = signal(false);
+  protected readonly apiError = signal<ApiError | null>(null);
+
+  protected readonly form = this.fb.group({
+    cashEnabled: [true],
+    debitCardEnabled: [false],
+    creditCardEnabled: [false],
+    bankTransferEnabled: [false],
+    cardBank: ['', [Validators.maxLength(100)]],
+    cardTerminalId: ['', [Validators.maxLength(50)]],
+    transferAccountNumber: ['', [Validators.maxLength(50)]],
+    transferAccountHolder: ['', [Validators.maxLength(150)]],
   });
 
-  private nextCustomId = 1;
+  // Signal del valor del formulario para reaccionar a los toggles en la vista.
+  private readonly value = toSignal(this.form.valueChanges, {
+    initialValue: this.form.getRawValue(),
+  });
+  protected readonly cardEnabled = computed(
+    () => !!this.value().debitCardEnabled || !!this.value().creditCardEnabled,
+  );
+  protected readonly transferEnabled = computed(() => !!this.value().bankTransferEnabled);
 
-  protected openCreate(): void {
-    this.editingMethod.set(null);
-    this.panelTitle.set('Nuevo método de pago');
-    this.panelOpen.set(true);
+  constructor() {
+    this.load();
   }
 
-  protected openEdit(method: PaymentMethod): void {
-    this.editingMethod.set(method);
-    this.panelTitle.set('Editar método de pago');
-    this.panelOpen.set(true);
+  protected toggle(
+    control: 'cashEnabled' | 'debitCardEnabled' | 'creditCardEnabled' | 'bankTransferEnabled',
+  ): void {
+    const target = this.form.controls[control];
+    target.setValue(!target.value);
+    this.syncValidators();
+    this.markChanged();
   }
 
-  protected closePanel(): void {
-    this.panelOpen.set(false);
-    this.editingMethod.set(null);
+  protected invalid(controlName: string): boolean {
+    const control = this.form.get(controlName);
+    return !!control && control.invalid && (control.touched || control.dirty);
   }
 
-  protected onSaved(value: PaymentMethodFormValue): void {
-    const current = this.editingMethod();
+  protected markChanged(): void {
+    this.saved.set(false);
+  }
 
-    if (current) {
-      this.methods.update((methods) =>
-        methods.map((method) => (method.id === current.id ? { ...method, ...value } : method)),
-      );
-    } else {
-      this.methods.update((methods) => [
-        ...methods,
-        { id: `custom-${this.nextCustomId++}`, ...value },
-      ]);
+  protected save(): void {
+    this.syncValidators();
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
     }
 
-    this.closePanel();
-  }
+    const value = this.form.getRawValue();
+    const body: SavePaymentSettingsRequest = {
+      cashEnabled: value.cashEnabled,
+      debitCardEnabled: value.debitCardEnabled,
+      creditCardEnabled: value.creditCardEnabled,
+      bankTransferEnabled: value.bankTransferEnabled,
+      cardBank: value.cardBank.trim() || null,
+      cardTerminalId: value.cardTerminalId.trim() || null,
+      transferAccountNumber: value.transferAccountNumber.trim() || null,
+      transferAccountHolder: value.transferAccountHolder.trim() || null,
+    };
 
-  protected toggle(id: string): void {
-    this.methods.update((methods) =>
-      methods.map((method) =>
-        method.id === id ? { ...method, enabled: !method.enabled } : method,
-      ),
-    );
-  }
+    this.saving.set(true);
+    this.saved.set(false);
+    this.apiError.set(null);
 
-  protected move(index: number, direction: -1 | 1): void {
-    const target = index + direction;
-    if (target < 0 || target >= this.methods().length) return;
-
-    this.methods.update((methods) => {
-      const reordered = [...methods];
-      [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
-      return reordered;
+    this.configuration.savePaymentSettings(body).subscribe({
+      next: (settings) => {
+        this.saving.set(false);
+        this.saved.set(true);
+        this.apply(settings);
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.apiError.set(extractApiError(err));
+      },
     });
+  }
+
+  private load(): void {
+    this.loading.set(true);
+    this.apiError.set(null);
+
+    this.configuration.getPaymentSettings().subscribe({
+      next: (settings) => {
+        this.loading.set(false);
+        this.apply(settings);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.apiError.set(extractApiError(err));
+      },
+    });
+  }
+
+  private apply(settings: SavePaymentSettingsRequest): void {
+    this.form.reset({
+      cashEnabled: settings.cashEnabled,
+      debitCardEnabled: settings.debitCardEnabled,
+      creditCardEnabled: settings.creditCardEnabled,
+      bankTransferEnabled: settings.bankTransferEnabled,
+      cardBank: settings.cardBank ?? '',
+      cardTerminalId: settings.cardTerminalId ?? '',
+      transferAccountNumber: settings.transferAccountNumber ?? '',
+      transferAccountHolder: settings.transferAccountHolder ?? '',
+    });
+    this.syncValidators();
+  }
+
+  // Activa/desactiva "requerido" en los datos bancarios según los toggles,
+  // reflejando SavePaymentSettingsRequestValidator del backend.
+  private syncValidators(): void {
+    const cardRequired =
+      this.form.controls.debitCardEnabled.value || this.form.controls.creditCardEnabled.value;
+    this.setConditionalRequired('cardBank', cardRequired, 100);
+    this.setConditionalRequired('cardTerminalId', cardRequired, 50);
+
+    const transferRequired = this.form.controls.bankTransferEnabled.value;
+    this.setConditionalRequired('transferAccountNumber', transferRequired, 50);
+    this.setConditionalRequired('transferAccountHolder', transferRequired, 150);
+  }
+
+  private setConditionalRequired(
+    controlName: 'cardBank' | 'cardTerminalId' | 'transferAccountNumber' | 'transferAccountHolder',
+    required: boolean,
+    maxLength: number,
+  ): void {
+    const control = this.form.controls[controlName];
+    control.setValidators(
+      required
+        ? [Validators.required, Validators.maxLength(maxLength)]
+        : [Validators.maxLength(maxLength)],
+    );
+    control.updateValueAndValidity({ emitEvent: false });
   }
 }
